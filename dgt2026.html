@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Das Grosse Treffen 2026 – Ralf's Festival Planer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #0d1117;
+    --bg-card:     #161b27;
+    --bg-card2:    #1c2333;
+    --bg-input:    #0a0e17;
+    --border:      #2d333b;
+    --border-dim:  #21262d;
+    --text:        #e6edf3;
+    --text-muted:  #8b949e;
+    --text-dim:    #484f58;
+    --green:       #34d399;
+    --green-glow:  rgba(52,211,153,0.12);
+    --blue:        #60a5fa;
+    --blue-glow:   rgba(96,165,250,0.12);
+    --red:         #f87171;
+    --amber:       #fbbf24;
+    --radius:      8px;
+    --shadow:      0 1px 8px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+    padding-bottom: 40px;
+  }
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0a0e17 0%, #111827 60%, #0f1e33 100%);
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--border-dim);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(52,211,153,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 50%, rgba(96,165,250,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .header h1 { font-size: 21px; font-weight: 700; color: var(--green); letter-spacing: 0.3px; position: relative; display:flex; align-items:center; gap:8px;}
+  .header .kicker { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); position:relative; margin-bottom:4px; }
+  .header .subtitle2 { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 6px; position: relative; }
+  .header .meta { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; position: relative; }
+
+  /* ── LAYOUT ── */
+  .container { padding: 18px 16px; max-width: 720px; margin: 0 auto; }
+
+  /* ── FILTER BAR ── */
+  .filter-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .filter-pill {
+    padding: 6px 13px; font-size: 12.5px; font-weight: 600;
+    border-radius: 20px; border: 1px solid var(--border);
+    background: var(--bg-input); color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .filter-pill.active-day {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 0 12px rgba(96,165,250,0.25);
+  }
+  .filter-pill.genre-pill { border-width: 1px; }
+  .filter-pill.genre-pill.active { color: #0d1117; font-weight: 700; }
+  .section-header {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-dim);
+    display: flex; align-items: center; gap: 10px;
+    margin: 14px 0 8px;
+  }
+  .section-header::after { content: ''; flex: 1; height: 1px; background: var(--border-dim); }
+  .result-count { font-size: 11.5px; color: var(--text-dim); margin: 4px 2px 12px; }
+
+  /* ── BAND CARDS ── */
+  .band-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-dim);
+    box-shadow: var(--shadow);
+    margin-bottom: 10px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+  }
+  .band-head { display:flex; align-items:center; gap:12px; padding: 13px 16px; }
+  .dot {
+    width: 46px; height: 46px; border-radius: 10px;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:15px; flex-shrink:0; position:relative;
+  }
+  .dot .spark { position:absolute; top:-6px; right:-6px; font-size:14px; }
+  .band-info { flex:1; min-width:0; }
+  .band-name { font-size: 15px; font-weight: 700; color: var(--text); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .role-badge { font-size: 9.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; text-transform:uppercase; letter-spacing:0.4px; }
+  .role-badge.headliner { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .role-badge.support { background: rgba(139,148,158,0.12); color: var(--text-muted); }
+  .multi-badge { font-size: 9.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; background: rgba(96,165,250,0.15); color: var(--blue); text-transform:uppercase; letter-spacing:0.4px; }
+  .band-meta1 { font-size: 12px; color: var(--text-muted); margin-top: 3px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+  .stage-chip { font-size: 10.5px; font-weight: 600; padding: 1px 8px; border-radius: 20px; white-space:nowrap; }
+  .band-meta2 { font-size: 12px; color: var(--text-muted); margin-top: 4px; display:flex; align-items:center; gap:6px; }
+  .stars { color: var(--amber); letter-spacing: 1px; font-size: 11px; }
+  .chevron { color: var(--text-dim); font-size: 12px; transition: transform 0.2s; flex-shrink:0; }
+  .band-card.open .chevron { transform: rotate(180deg); }
+
+  .band-body { max-height:0; overflow:hidden; transition: max-height 0.3s ease; }
+  .band-card.open .band-body { max-height: 1200px; }
+  .band-body-inner { padding: 2px 16px 16px; border-top: 1px solid var(--border-dim); }
+
+  .slots-box { margin-top: 12px; }
+  .slots-label { font-size: 10.5px; font-weight: 700; text-transform:uppercase; letter-spacing:0.6px; color: var(--text-dim); margin-bottom: 6px; }
+  .slot-row { display:flex; align-items:center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border-dim); font-size: 12.5px; }
+  .slot-row:last-child { border-bottom: none; }
+  .slot-day { color: var(--text); font-weight: 600; min-width: 62px; }
+  .slot-time { color: var(--text-muted); font-variant-numeric: tabular-nums; min-width: 92px; }
+
+  .besonderheit-box {
+    margin-top: 12px; border-radius: var(--radius); padding: 10px 12px;
+    font-size: 12.5px; line-height: 1.55; border-left: 3px solid var(--amber);
+    background: rgba(251,191,36,0.06); color: var(--text-muted);
+  }
+  .besonderheit-box strong { color: var(--amber); font-weight: 700; display:block; margin-bottom:2px; }
+
+  .geschichte { font-size: 12.5px; color: var(--text-muted); line-height: 1.65; margin-top: 12px; }
+  .hits-label, .tipp-label { font-size: 10.5px; font-weight: 700; text-transform:uppercase; letter-spacing:0.6px; color: var(--text-dim); margin-top: 12px; }
+  .hits-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .hit-chip { font-size: 11.5px; padding: 3px 10px; border-radius: 20px; background: var(--bg-card2); border:1px solid var(--border-dim); color: var(--text); }
+  .tipp-text { font-size: 12.5px; color: var(--blue); margin-top: 6px; font-weight:500; line-height:1.5; }
+
+  .link-row { display:flex; gap:8px; margin-top: 14px; }
+  .link-btn {
+    flex:1; text-align:center; padding: 8px 10px; font-size: 12px; font-weight: 600;
+    border-radius: var(--radius); border: 1px solid var(--border); color: var(--text-muted);
+    background: var(--bg-input); text-decoration:none; transition: all 0.15s;
+  }
+  .link-btn.spotify { color: #1DB954; border-color: rgba(29,185,84,0.3); }
+  .link-btn.disabled { opacity: 0.35; pointer-events:none; }
+
+  .stage-legend { display:flex; flex-wrap:wrap; gap:10px; margin: 10px 2px 4px; font-size: 11px; color: var(--text-dim); }
+  .stage-legend span { display:flex; align-items:center; gap:4px; }
+
+  .footer-note { text-align:center; font-size: 11px; color: var(--text-dim); margin-top: 24px; padding: 0 20px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="kicker">⚡ Ralf's Festival Planer</div>
+    <h1>🐉 Das Grosse Treffen</h1>
+    <div class="subtitle2">Line-up 2026</div>
+    <div class="meta">07.–09.08.2026 · Mega Eventpark Aach am Bodensee · 13 Bands · Doors Fr 12:00 · Sa 10:00 · So 11:00</div>
+  </div>
+
+  <div class="container">
+
+    <div class="filter-row" id="dayRow">
+      <div class="filter-pill active-day" data-day="alle">Alle</div>
+      <div class="filter-pill" data-day="headliner">Headliner</div>
+      <div class="filter-pill" data-day="freitag">Freitag</div>
+      <div class="filter-pill" data-day="samstag">Samstag</div>
+      <div class="filter-pill" data-day="sonntag">Sonntag</div>
+    </div>
+
+    <div class="section-header">Genre</div>
+    <div class="filter-row" id="genreRow"></div>
+
+    <div class="stage-legend">
+      <span>🐉 Drachenbühne (Hauptbühne)</span>
+      <span>🔥 Endzeit Bühne</span>
+      <span>🌳 Schildhainbühne</span>
+      <span>⚓ Hafenbühne</span>
+    </div>
+
+    <div class="result-count" id="resultCount"></div>
+    <div id="bandList"></div>
+
+    <div class="footer-note">
+      Zeiten &amp; Bühnen offiziell laut dgt.events/programmplan (Stand: Juli 2026) · Programmänderungen vorbehalten.<br>
+      Bands mit mehreren Slots (Sintram der Barde, The Blackbeers, Vargan) sind entsprechend markiert – Details beim Aufklappen.
+    </div>
+
+  </div>
+
+<script>
+// Bühnen-Icons & Farben
+const stageInfo = {
+  "Drachenbühne": { icon: "🐉", bg: "rgba(52,211,153,0.12)", color: "#34d399" },
+  "Endzeit Bühne": { icon: "🔥", bg: "rgba(248,113,113,0.12)", color: "#f87171" },
+  "Schildhainbühne": { icon: "🌳", bg: "rgba(96,165,250,0.12)", color: "#60a5fa" },
+  "Hafenbühne": { icon: "⚓", bg: "rgba(251,191,36,0.12)", color: "#fbbf24" },
+};
+const dayLabel = { freitag: "Freitag", samstag: "Samstag", sonntag: "Sonntag" };
+const dayDate = { freitag: "07.08.", samstag: "08.08.", sonntag: "09.08." };
+
+const bands = [
+  {
+    name: "Subway To Sally",
+    role: "Headliner",
+    country: "de",
+    genre: "Mittelalter-Rock / Folk Metal",
+    genreCluster: "Folk / Celtic",
+    dotBg: "rgba(29,158,117,0.2)", dotColor: "#20b080",
+    herkunft: "Leipzig, Deutschland",
+    gegr: "1993",
+    bekanntheit: 5,
+    bek_text: "Genre-Ikone, weltbekannt",
+    slots: [ { tag: "samstag", zeit: "22:00–23:30", buehne: "Drachenbühne" } ],
+    besonderheit: { icon: "🏆", text: "Gelten seit über 30 Jahren als DIE Pioniere des deutschen Mittelalter-Rock – haben das Genre quasi miterfunden." },
+    hits: ["Kryptonite", "Ohohoho", "Rattenfänger", "Fuer Immer", "Falscher Heiland"],
+    geschichte: "Seit 1993 mischt die Leipziger Band Dudelsack, Drehleier und harte Gitarren zu ihrem unverwechselbaren Mittelalter-Rock-Sound. Über die Jahrzehnte wurden sie zum Aushängeschild der Szene und füllen bis heute große Hallen und Festivalbühnen. Beim DGT sind sie der klare Headliner-Act des Samstags – direkt vor dem großen Drachenfeuer.",
+    tipp: "Klarer Pflichttermin – Slot direkt vor der Feuershow, danach ist Festivaltag zu Ende.",
+    website: "https://www.subwaytosally.com",
+    spotify: "https://open.spotify.com/search/Subway%20To%20Sally/artists"
+  },
+  {
+    name: "Stahlmann",
+    role: "Headliner",
+    country: "de",
+    genre: "Neue Deutsche Härte",
+    genreCluster: "NDH / Industrial",
+    dotBg: "rgba(90,122,153,0.2)", dotColor: "#7fa3c9",
+    herkunft: "Leipzig, Deutschland",
+    gegr: "2008",
+    bekanntheit: 4,
+    bek_text: "International bekannt, große Fanbase",
+    slots: [ { tag: "freitag", zeit: "22:00–23:30", buehne: "Drachenbühne" } ],
+    besonderheit: null,
+    hits: ["Herzstück", "Adrenalin", "Vorwärts Immer", "Leviathan", "Quarz"],
+    geschichte: "Seit 2008 stehen Stahlmann für düsteren, treibenden NDH-Sound mit kraftvollen Refrains. Über mehrere Alben und Chart-Erfolge hat sich die Band fest in der Szene etabliert und tourt regelmäßig durch große Hallen. Beim DGT übernehmen sie die Headliner-Rolle am Freitag, direkt vor der Feuershow.",
+    tipp: "Guter Opener fürs Wochenende – laut, düster, hymnisch.",
+    website: "https://stahlmann-online.de",
+    spotify: "https://open.spotify.com/search/Stahlmann/artists"
+  },
+  {
+    name: "CNVX",
+    role: "Support",
+    country: "de",
+    genre: "Electronic Dark Rock / Dark Pop",
+    genreCluster: "Electronic / Pop",
+    dotBg: "rgba(20,160,180,0.2)", dotColor: "#20a0c0",
+    herkunft: "Chemnitz, Deutschland",
+    gegr: "2021",
+    bekanntheit: 2,
+    bek_text: "Aufstrebender Newcomer",
+    slots: [ { tag: "freitag", zeit: "17:00–18:30", buehne: "Drachenbühne" } ],
+    besonderheit: { icon: "🎤", text: "Support-Slot für Mono Inc. und Future Palace vor über 4.000 Besuchern beim Zwickauer Stadtfest." },
+    hits: ["Secret Signs", "Eiskalt", "Face My Fears", "Panic Attacks", "Oceans Embrace"],
+    geschichte: "Erst 2021 in Chemnitz gegründet, verschmilzt CNVX klaren Gesang mit elektronischen Beats, rockigen Gitarren und Darkwave-Anleihen. 2025 erschien das Debütalbum 'Unfolding'. Die Band hat sich in kurzer Zeit einen Namen in der Dark-Rock-Szene gemacht und eröffnet am DGT den Freitag auf der Hauptbühne.",
+    tipp: "Für Fans von Mono Inc. / VNV Nation – frischer, moderner Sound zum Freitags-Einstieg.",
+    website: "https://cnvx-music.com",
+    spotify: "https://open.spotify.com/search/CNVX/artists"
+  },
+  {
+    name: "Deus Vult",
+    role: "Support",
+    country: "de",
+    genre: "Mittelalter-Rock / Steampunk",
+    genreCluster: "Folk / Celtic",
+    dotBg: "rgba(29,158,117,0.2)", dotColor: "#20b080",
+    herkunft: "Amberg, Deutschland",
+    gegr: "~2018",
+    bekanntheit: 2,
+    bek_text: "Regional bekannt, wachsende Fanbase",
+    slots: [ { tag: "samstag", zeit: "19:00–20:30", buehne: "Drachenbühne" } ],
+    besonderheit: { icon: "🎪", text: "Sieben Musiker auf der Bühne, zwei Dudelsackspieler – Sound zwischen Mittelalter-Markt und Mad-Max-Endzeitgefühl. Geben am Samstag zusätzlich einen Dudelsack-Workshop auf der Schildhainbühne." },
+    hits: [],
+    geschichte: "Die Amberger Band kombiniert Mittelalter-Rock mit Steampunk-Elementen und einem Hauch Endzeitstimmung. Bekannt für ihre Bühnenpräsenz animieren sie ihr Publikum konsequent zum Mitsingen und Tanzen. Direkt vor ihrem Konzert-Slot geben zwei ihrer Dudelsackspieler einen Workshop auf der Schildhainbühne.",
+    tipp: "Vorher den Dudelsack-Workshop (11:30 Uhr, Schildhainbühne) mitnehmen – lohnt sich!",
+    website: null,
+    spotify: "https://open.spotify.com/search/Deus%20Vult%20Amberg/artists"
+  },
+  {
+    name: "Final Stage",
+    role: "Support",
+    country: "it",
+    genre: "Modern Metal / Alternative Metal",
+    genreCluster: "Rock / Hard Rock",
+    dotBg: "rgba(99,153,34,0.2)", dotColor: "#7bbf30",
+    herkunft: "Italien",
+    gegr: "n.b.",
+    bekanntheit: 2,
+    bek_text: "National (IT) bekannt",
+    slots: [ { tag: "samstag", zeit: "16:45–18:15", buehne: "Drachenbühne" } ],
+    besonderheit: { icon: "🇮🇹", text: "Waren als Opener/Special Guest auf der Europatour der Band Vindicta unterwegs." },
+    hits: ["Save This Heart", "In The Illusion", "Supreme Spokesperson", "More Than an Echo"],
+    geschichte: "Die italienische Band verbindet kraftvolle Gitarrenriffs mit melodischen Refrains im Modern-Metal-Gewand. Mit eingängigen Songs und energiegeladenen Live-Shows haben sie sich in Italien einen Namen gemacht. Der DGT-Auftritt ist Teil ihrer wachsenden internationalen Präsenz.",
+    tipp: "Frischer, moderner Metal-Sound als Kontrast zum Folk-lastigen Rest des Line-ups.",
+    website: null,
+    spotify: "https://open.spotify.com/artist/7pgJNa4bOb52fWzFCgxTq7"
+  },
+  {
+    name: "The Blackbeers",
+    role: "Support",
+    country: "de",
+    genre: "Pirate Rock / Pirate Punk",
+    genreCluster: "Pirate / Shanty",
+    dotBg: "rgba(201,160,80,0.2)", dotColor: "#c9a050",
+    herkunft: "Selb, Deutschland",
+    gegr: "n.b.",
+    bekanntheit: 2,
+    bek_text: "Feste Größe auf Mittelalter-/Piraten-Festivals",
+    slots: [
+      { tag: "freitag", zeit: "19:30–21:00", buehne: "Drachenbühne" },
+      { tag: "samstag", zeit: "16:00–17:00", buehne: "Schildhainbühne" }
+    ],
+    besonderheit: { icon: "🏴‍☠️", text: "Sechsköpfige Piraten-Punk-Crew mit Nyckelharpa (Schlüsselfidel) – Bandmitglieder nennen sich u.a. 'Captain Willy Wanker' und 'Grimbeard McFiddlefucker'. Spielen gleich zweimal am DGT: Freitagabend auf der Hauptbühne, Samstagnachmittag auf der Schildhainbühne." },
+    hits: [],
+    geschichte: "Die Pirate-Punk-Band aus Selb (Oberfranken) bringt Punk-Energie und Metal-Wucht auf die Bühne – garniert mit viel Humor und Piraten-Folklore. Bekannt von Auftritten auf Festivals wie dem Hörnerfest, sind sie feste Größe im deutschen Piraten-Szene-Circuit.",
+    tipp: "Zwei Chancen am Wochenende – Freitag groß auf der Drachenbühne, Samstag kompakter auf der Schildhainbühne.",
+    website: null,
+    spotify: "https://open.spotify.com/search/The%20Blackbeers/artists"
+  },
+  {
+    name: "MegaBosch",
+    role: "Support",
+    country: "de",
+    genre: "Endzeit-Rock",
+    genreCluster: "Rock / Hard Rock",
+    dotBg: "rgba(99,153,34,0.2)", dotColor: "#7bbf30",
+    herkunft: "Hannover, Deutschland",
+    gegr: "2009",
+    bekanntheit: 3,
+    bek_text: "Feste Größe der deutschen Endzeitszene",
+    slots: [ { tag: "freitag", zeit: "20:30–21:30", buehne: "Endzeit Bühne" } ],
+    besonderheit: { icon: "🔥", text: "Bauten 2013 auf dem Wacken Open Air die legendäre Wasteland Stage aus rostigen Schiffscontainern – die inzwischen feste Wacken-Bühne ist!" },
+    hits: ["Es ist Geil", "2000 Watt"],
+    geschichte: "Die selbsternannten 'Rockstars der Apokalypse' aus Hannover bringen postapokalyptischen 'Retrokalypse'-Rock mit Einflüssen aus Hardrock, Punk, Swing und Funk auf die Bühne. Ihr Markenzeichen: theatralische Bühnenshows mit Feuer, Tänzerinnen und dem legendären 'MegaMog'-Tourfahrzeug. Beim DGT spielen sie standesgemäß auf der Endzeit Bühne.",
+    tipp: "Passt perfekt zum Endzeitdorf drumherum – volles Programm, nicht nur Musik.",
+    website: "http://www.megabosch.de",
+    spotify: "https://open.spotify.com/search/MegaBosch/artists"
+  },
+  {
+    name: "Beer O'Clock",
+    role: "Support",
+    country: "de",
+    genre: "Country",
+    genreCluster: "Country",
+    dotBg: "rgba(217,154,91,0.2)", dotColor: "#d99a5b",
+    herkunft: "n.b. (Auftritte auch bei Pullman City)",
+    gegr: "n.b.",
+    bekanntheit: 1,
+    bek_text: "Newcomer im Fantasy-Festival-Kontext",
+    slots: [ { tag: "sonntag", zeit: "15:00–16:30", buehne: "Drachenbühne" } ],
+    besonderheit: { icon: "🤠", text: "Laut Programmplan gibt's 'Beer O'Clock und Line Dance' – der Veranstalter kündigt an, dass das DGT dieses Jahr 'komplett aus der Reihe tanzt'. Country statt Metal zum Sonntagsausklang." },
+    hits: [],
+    geschichte: "Beer O'Clock bringt New-Country-Sound mit Pedal-Steel-Gitarre, Banjo und Line-Dance-Feeling auf die Hauptbühne – ein bewusster Stilbruch im sonst folk- und metallastigen DGT-Programm. Genaue Bandinfos zur konkreten Besetzung waren nicht zweifelsfrei zu verifizieren, da mehrere Bands unter diesem Namen aktiv sind.",
+    tipp: "Perfekt zum entspannten Ausklang am Sonntag, direkt vor dem Festivalende.",
+    website: null,
+    spotify: null
+  },
+  {
+    name: "Tir Nan Og",
+    role: "Support",
+    country: "de",
+    genre: "Irish Folk Rock",
+    genreCluster: "Folk / Celtic",
+    dotBg: "rgba(29,158,117,0.2)", dotColor: "#20b080",
+    herkunft: "Neuburg an der Donau, Deutschland",
+    gegr: "2001",
+    bekanntheit: 3,
+    bek_text: "Über 400 Live-Shows, feste Festivalgröße",
+    slots: [ { tag: "sonntag", zeit: "17:30–19:00", buehne: "Drachenbühne" } ],
+    besonderheit: { icon: "🎉", text: "Feiern 2026 ihr 25-jähriges Bandjubiläum – passend zum 5-jährigen Jubiläum des DGT selbst!" },
+    hits: ["Ship of Fools", "Rebels on the Rise", "Idiots on Parade", "Row Me Bully Boys", "Dancing with the Fairies"],
+    geschichte: "Die 'bayerischen Iren' verbinden seit über 20 Jahren keltischen Folk mit Rock, Reggae und akustischem Punk. Mit über 400 gespielten Shows und mehreren Alben (zuletzt 'to the Otherworld') gehören sie zu den erfahrensten Acts im deutschen Irish-Folk-Rock. Beim DGT beschließen sie das Festival am Sonntag als letzter Konzert-Act.",
+    tipp: "Mitsing-Garantie – schließt das Festival auf der Hauptbühne ab.",
+    website: "https://tirnan.org",
+    spotify: "https://open.spotify.com/search/Tir%20Nan%20Og%20Folk/artists"
+  },
+  {
+    name: "Vera Lux",
+    role: "Support",
+    country: "de",
+    genre: "Folk Metal",
+    genreCluster: "Folk / Celtic",
+    dotBg: "rgba(29,158,117,0.2)", dotColor: "#20b080",
+    herkunft: "Nürnberg, Deutschland",
+    gegr: "2014",
+    bekanntheit: 3,
+    bek_text: "Fester Bestandteil der Folk-/Mittelalterszene",
+    slots: [ { tag: "freitag", zeit: "17:00–19:00", buehne: "Schildhainbühne" } ],
+    besonderheit: { icon: "💿", text: "Ihr drittes Studioalbum 'Supernova' erscheint am 24.07.2026 – nur zwei Wochen vor dem DGT-Auftritt!" },
+    hits: [],
+    geschichte: "Die Nürnberger Band um Frontfrau Inara verbindet moderne Metal-Riffs mit Drehleier, Geige und Dudelsack zu energiegeladenem Folk Metal. Nach den Alben 'Aus dem Nichts' (2020) und 'Durch die Schatten' (2024) folgt im Sommer 2026 'Supernova'. Bekannt für enorme Spielfreude und Publikumsnähe bei Live-Shows.",
+    tipp: "Frisches Material direkt vom neuen Album – lohnt sich, vorher reinzuhören.",
+    website: "https://vera-lux.de",
+    spotify: "https://open.spotify.com/search/Vera%20Lux/artists"
+  },
+  {
+    name: "Tremors",
+    role: "Support",
+    country: "de",
+    genre: "Atmospheric Death Metal",
+    genreCluster: "Death / Thrash",
+    dotBg: "rgba(180,40,40,0.2)", dotColor: "#cc4040",
+    herkunft: "Singen (Hohentwiel), Deutschland",
+    gegr: "1994",
+    bekanntheit: 2,
+    bek_text: "Kult-Status in der süddeutschen Szene",
+    slots: [ { tag: "samstag", zeit: "20:30–21:15", buehne: "Endzeit Bühne" } ],
+    besonderheit: { icon: "⚰️", text: "Lösten sich 2013 auf, feierten 2023 eine 'Back from the grave!'-Reunion in Konstanz – der DGT-Auftritt ist praktisch ein Heimspiel, Singen liegt nur wenige Kilometer von Aach entfernt." },
+    hits: ["Graveyard For My Friends", "My Darkest Hour", "Voice I Seven I Suns"],
+    geschichte: "1994 in Singen gegründet, prägten Tremors ihren eigenen Begriff 'Atmospheric Death Rock Metal' – tiefe Growls, groovige Riffs und atmosphärische Keyboard-Flächen, oft mit Hypocrisy verglichen. Nach der Auflösung 2013 und einer einmaligen Reunion-Show 2023 kehren sie nun für den DGT als lokale Death-Metal-Institution zurück, standesgemäß auf der Endzeit Bühne.",
+    tipp: "Härtester Act im Line-up – klanglich der Gegenpol zum Folk-Rock-Rest des Festivals.",
+    website: null,
+    spotify: "https://open.spotify.com/search/Tremors%20Death%20Metal%20Singen/artists"
+  },
+  {
+    name: "Vargan",
+    role: "Support",
+    country: "de",
+    genre: "Folk Metal",
+    genreCluster: "Folk / Celtic",
+    dotBg: "rgba(29,158,117,0.2)", dotColor: "#20b080",
+    herkunft: "n.b.",
+    gegr: "n.b.",
+    bekanntheit: 1,
+    bek_text: "Newcomer, kaum belastbare Infos verfügbar",
+    slots: [
+      { tag: "samstag", zeit: "15:00–16:00", buehne: "Drachenbühne" },
+      { tag: "sonntag", zeit: "16:00–17:00", buehne: "Schildhainbühne" }
+    ],
+    besonderheit: { icon: "🔁", text: "Spielen gleich zweimal am DGT: Samstag auf der großen Drachenbühne, Sonntag nochmal kompakter auf der Schildhainbühne." },
+    hits: [],
+    geschichte: "Zu Vargan ließen sich trotz Recherche keine verlässlichen Bandinfos verifizieren (nicht zu verwechseln mit der bekannteren Band 'Varg' aus Coburg). Laut Programmplan spielen sie Folk Metal an gleich zwei Terminen übers Wochenende verteilt. Sobald mehr Infos verfügbar sind, ergänze ich sie hier gerne.",
+    tipp: "Geheimtipp-Potenzial – zwei Chancen zum Reinhören übers Wochenende.",
+    website: null,
+    spotify: null
+  },
+  {
+    name: "Sintram der Barde",
+    role: "Support",
+    country: "de",
+    genre: "Shanty / Barden-Musik",
+    genreCluster: "Pirate / Shanty",
+    dotBg: "rgba(201,160,80,0.2)", dotColor: "#c9a050",
+    herkunft: "n.b.",
+    gegr: "n.b.",
+    bekanntheit: 1,
+    bek_text: "Solo-Barde, Festival-Stammgast",
+    slots: [
+      { tag: "freitag", zeit: "15:00–16:00", buehne: "Drachenbühne" },
+      { tag: "freitag", zeit: "20:30–21:30", buehne: "Drachenbühne" },
+      { tag: "samstag", zeit: "12:00–12:30", buehne: "Hafenbühne" },
+      { tag: "samstag", zeit: "18:30–19:00", buehne: "Hafenbühne" },
+      { tag: "samstag", zeit: "20:30–21:30", buehne: "Hafenbühne" },
+      { tag: "sonntag", zeit: "12:00–12:30", buehne: "Hafenbühne" },
+      { tag: "sonntag", zeit: "18:30–19:00", buehne: "Hafenbühne" }
+    ],
+    besonderheit: { icon: "🪕", text: "Fleißigster Act des ganzen Festivals: 7 Auftritte über alle drei Tage verteilt, meist auf der Hafenbühne im Piratenbereich." },
+    hits: [],
+    geschichte: "Sintram der Barde tritt als akustischer Solo-Act mit Shanty- und Piratenliedgut auf. Anders als die großen Bühnenacts hat er gleich mehrere feste Kurzslots über alle drei Festivaltage verteilt – Freitag auf der Drachenbühne, Samstag und Sonntag jeweils mehrfach auf der Hafenbühne im Piratenbereich.",
+    tipp: "Läuft öfter als jeder andere Act – einfach im Piratenbereich zwischendurch vorbeischauen.",
+    website: null,
+    spotify: null
+  }
+];
+
+// ── Genre-Cluster-Definition ──
+const clusterOrder = ["Rock / Hard Rock", "Country", "Death / Thrash", "Electronic / Pop", "Folk / Celtic", "NDH / Industrial", "Pirate / Shanty"];
+const clusterColors = {
+  "Rock / Hard Rock": { bg: "rgba(99,153,34,0.15)", color: "#7bbf30" },
+  "Country": { bg: "rgba(217,154,91,0.15)", color: "#d99a5b" },
+  "Death / Thrash": { bg: "rgba(180,40,40,0.15)", color: "#cc4040" },
+  "Electronic / Pop": { bg: "rgba(20,160,180,0.15)", color: "#20a0c0" },
+  "Folk / Celtic": { bg: "rgba(29,158,117,0.15)", color: "#20b080" },
+  "NDH / Industrial": { bg: "rgba(90,122,153,0.15)", color: "#7fa3c9" },
+  "Pirate / Shanty": { bg: "rgba(201,160,80,0.15)", color: "#c9a050" },
+};
+
+let activeDay = "alle";
+let activeGenre = null;
+
+function initials(name) {
+  return name.split(" ").map(w => w[0]).join("").substring(0,2).toUpperCase();
+}
+function stars(n) { return "★".repeat(n) + "☆".repeat(5-n); }
+
+function openSpotify(webUrl, event) {
+  event.preventDefault(); event.stopPropagation();
+  if (!webUrl) return;
+  const m = webUrl.match(/open\.spotify\.com\/artist\/([A-Za-z0-9]+)/);
+  if (!m) { window.open(webUrl, '_blank'); return; }
+  const fb = setTimeout(() => window.open(webUrl, '_blank'), 800);
+  window.addEventListener('blur', () => clearTimeout(fb), { once: true });
+  window.location.href = 'spotify:artist:' + m[1];
+}
+
+function renderGenreRow() {
+  const usedClusters = [...new Set(bands.map(b => b.genreCluster))];
+  const ordered = clusterOrder.filter(c => usedClusters.includes(c));
+  const row = document.getElementById('genreRow');
+  row.innerHTML = ordered.map(c => {
+    const col = clusterColors[c];
+    return `<div class="filter-pill genre-pill" data-genre="${c}" style="border-color:${col.color}66; color:${col.color}; background:${col.bg}">${c}</div>`;
+  }).join('');
+  row.querySelectorAll('.genre-pill').forEach(el => {
+    el.addEventListener('click', () => {
+      const g = el.getAttribute('data-genre');
+      activeGenre = (activeGenre === g) ? null : g;
+      renderGenreRow();
+      renderBands();
+    });
+    if (el.getAttribute('data-genre') === activeGenre) {
+      const col = clusterColors[activeGenre];
+      el.classList.add('active');
+      el.style.background = col.color;
+      el.style.color = "#0d1117";
+    }
+  });
+}
+
+function timeSortKey(zeit) {
+  if (!zeit) return 9999;
+  const start = zeit.split('–')[0];
+  const [h, m] = start.split(':').map(Number);
+  const hh = h < 6 ? h + 24 : h; // Mitternacht-Slots ans Ende
+  return hh * 60 + m;
+}
+
+function primarySlotForDay(band, day) {
+  const matches = band.slots.filter(s => s.tag === day);
+  if (matches.length === 0) return band.slots[0];
+  return matches.sort((a,b) => timeSortKey(a.zeit) - timeSortKey(b.zeit))[0];
+}
+
+function renderBands() {
+  let list = bands.slice();
+
+  if (activeDay === "headliner") {
+    list = list.filter(b => b.role === "Headliner");
+  } else if (activeDay !== "alle") {
+    list = list.filter(b => b.slots.some(s => s.tag === activeDay));
+  }
+  if (activeGenre) {
+    list = list.filter(b => b.genreCluster === activeGenre);
+  }
+
+  const dayView = (activeDay !== "alle" && activeDay !== "headliner");
+
+  if (dayView) {
+    list.sort((a,b) => timeSortKey(primarySlotForDay(a, activeDay).zeit) - timeSortKey(primarySlotForDay(b, activeDay).zeit));
+  } else {
+    list.sort((a,b) => {
+      if (a.role !== b.role) return a.role === "Headliner" ? -1 : 1;
+      return b.bekanntheit - a.bekanntheit;
+    });
+  }
+
+  document.getElementById('resultCount').textContent = `${list.length} Band${list.length !== 1 ? 's' : ''} angezeigt`;
+
+  const container = document.getElementById('bandList');
+  container.innerHTML = list.map((b, i) => {
+    const col = clusterColors[b.genreCluster];
+    const bes = b.besonderheit;
+    const primary = dayView ? primarySlotForDay(b, activeDay) : b.slots.sort((a,b2)=>timeSortKey(a.zeit)-timeSortKey(b2.zeit))[0];
+    const st = stageInfo[primary.buehne] || { icon: "📍", bg: "rgba(139,148,158,0.12)", color: "#8b949e" };
+    const multi = b.slots.length > 1;
+
+    return `
+    <div class="band-card" data-idx="${i}" style="border-left:3px solid ${col.color}">
+      <div class="band-head">
+        <div class="dot" style="background:${b.dotBg}; color:${b.dotColor}">
+          ${initials(b.name)}
+          ${bes ? '<span class="spark">⚡</span>' : ''}
+        </div>
+        <div class="band-info">
+          <div class="band-name">${b.name}
+            <span class="role-badge ${b.role === 'Headliner' ? 'headliner' : 'support'}">${b.role}</span>
+            ${multi ? `<span class="multi-badge">${b.slots.length}× Auftritte</span>` : ''}
+          </div>
+          <div class="band-meta1">⏱ ${dayLabel[primary.tag]}, ${dayDate[primary.tag]} · ${primary.zeit} <span class="stage-chip" style="background:${st.bg}; color:${st.color}">${st.icon} ${primary.buehne}</span></div>
+          <div class="band-meta2"><span class="stars">${stars(b.bekanntheit)}</span> ${b.genre} · ${b.herkunft}</div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="band-body">
+        <div class="band-body-inner">
+          ${multi ? `<div class="slots-box"><div class="slots-label">Alle Auftritte</div>${b.slots.map(s => {
+            const si = stageInfo[s.buehne] || { icon:"📍", bg:"rgba(139,148,158,0.12)", color:"#8b949e" };
+            return `<div class="slot-row"><span class="slot-day">${dayLabel[s.tag]}</span><span class="slot-time">${s.zeit} Uhr</span><span class="stage-chip" style="background:${si.bg}; color:${si.color}">${si.icon} ${s.buehne}</span></div>`;
+          }).join('')}</div>` : ''}
+          ${bes ? `<div class="besonderheit-box"><strong>${bes.icon} Besonderheit</strong>${bes.text}</div>` : ''}
+          <div class="geschichte">${b.geschichte}</div>
+          ${b.hits.length ? `<div class="hits-label">Bekannte Songs</div><div class="hits-list">${b.hits.map(h => `<span class="hit-chip">${h}</span>`).join('')}</div>` : ''}
+          <div class="tipp-label">Ralf's Tipp</div>
+          <div class="tipp-text">${b.tipp}</div>
+          <div class="link-row">
+            <a href="${b.website || '#'}" target="_blank" class="link-btn ${!b.website ? 'disabled' : ''}" onclick="event.stopPropagation()">🌐 Website</a>
+            <a href="${b.spotify || '#'}" class="link-btn spotify ${!b.spotify ? 'disabled' : ''}" onclick="openSpotify('${b.spotify}', event)">♫ Spotify</a>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.band-card').forEach(card => {
+    card.addEventListener('click', () => card.classList.toggle('open'));
+  });
+}
+
+document.querySelectorAll('#dayRow .filter-pill').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('#dayRow .filter-pill').forEach(e => e.classList.remove('active-day'));
+    el.classList.add('active-day');
+    activeDay = el.getAttribute('data-day');
+    renderBands();
+  });
+});
+
+renderGenreRow();
+renderBands();
+</script>
+</body>
+</html>

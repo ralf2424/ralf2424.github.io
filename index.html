@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ralf // Homepage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #0d1117;
+    --bg-card:     #161b27;
+    --bg-card2:    #1c2333;
+    --bg-input:    #0a0e17;
+    --border:      #2d333b;
+    --border-dim:  #21262d;
+    --text:        #e6edf3;
+    --text-muted:  #8b949e;
+    --text-dim:    #484f58;
+    --green:       #34d399;
+    --green-glow:  rgba(52,211,153,0.12);
+    --blue:        #60a5fa;
+    --blue-glow:   rgba(96,165,250,0.12);
+    --red:         #f87171;
+    --amber:       #fbbf24;
+    --radius:      8px;
+    --shadow:      0 1px 8px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0a0e17 0%, #111827 60%, #0f1e33 100%);
+    padding: 40px 24px 32px;
+    border-bottom: 1px solid var(--border-dim);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+  }
+  .header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(52,211,153,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 50%, rgba(96,165,250,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .header h1 {
+    font-size: 28px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--green); position: relative;
+  }
+  .header .subtitle {
+    font-size: 13px; color: var(--text-muted); margin-top: 8px; position: relative;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 900px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  .section-header {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0 14px;
+  }
+  .section-header::after { content: ''; flex: 1; height: 1px; background: var(--border-dim); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 8px; }
+
+  /* ── LINK CARDS ── */
+  .link-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-dim);
+    border-left: 3px solid var(--border);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+    transition: transform 0.15s, border-left-color 0.15s;
+  }
+  .link-card:hover {
+    transform: translateY(-2px);
+    border-left-color: var(--green);
+  }
+  .link-card::after {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: var(--green);
+    opacity: 0.05;
+    transform: translate(20px, -20px);
+  }
+  .link-card .label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px;
+  }
+  .link-card .title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .link-card .desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .link-card .arrow {
+    position: absolute; bottom: 14px; right: 16px;
+    font-size: 14px; color: var(--green); opacity: 0; transition: opacity 0.15s;
+  }
+  .link-card:hover .arrow { opacity: 1; }
+
+  /* Platzhalter-Card für zukünftige Inhalte */
+  .link-card.placeholder {
+    border-left-color: var(--border-dim);
+    opacity: 0.5;
+    cursor: default;
+  }
+  .link-card.placeholder:hover { transform: none; border-left-color: var(--border-dim); }
+
+  footer {
+    text-align: center; padding: 24px; color: var(--text-dim); font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Ralf</h1>
+    <div class="subtitle">// Festivals · Projekte · Tools</div>
+  </div>
+
+  <div class="container">
+
+    <div class="section-header">Festivals</div>
+    <div class="grid">
+      <a href="wacken-2026.html" class="link-card">
+        <div class="label">Festival</div>
+        <div class="title">Wacken 2026</div>
+        <div class="desc">Lineup, Timetable und Bandübersicht</div>
+        <div class="arrow">→</div>
+      </a>
+      <a href="metalacker-2026.html" class="link-card">
+        <div class="label">Festival</div>
+        <div class="title">Metalacker 2026</div>
+        <div class="desc">Lineup, Timetable und Bandübersicht</div>
+        <div class="arrow">→</div>
+      </a>
+      <a href="dgt2026.html" class="link-card">
+        <div class="label">Festival</div>
+        <div class="title">Das große Treffen 2026</div>
+        <div class="desc">Lineup, Timetable und Bandübersicht</div>
+        <div class="arrow">→</div>
+      </a>
+    </div>
+
+  </div>
+
+  <footer>ralf2424.github.io</footer>
+
+</body>
+</html>
