@@ -23,7 +23,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,Bl
 .header-title{font-size:22px;font-weight:700;color:var(--green);margin:4px 0 3px;letter-spacing:-0.3px;position:relative;}
 .header-planer{font-size:11px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;position:relative;}
 .header-sub{font-size:11px;color:var(--text-muted);line-height:1.5;position:relative;}
-.filter-wrap{background:var(--bg-card);border-bottom:1px solid var(--border-dim);padding:10px 12px 8px;position:sticky;top:96px;z-index:90;overflow:hidden;transition:max-height .28s ease,opacity .22s ease,padding .28s ease;}
+.filter-wrap{background:var(--bg-card);border-bottom:1px solid var(--border-dim);padding:10px 12px 8px;}
 .filter-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;}
 .filter-sep{display:flex;align-items:center;gap:8px;margin:3px 0 5px;}
 .filter-sep-line{flex:1;height:1px;background:var(--border-dim);}
@@ -408,36 +408,8 @@ let activeTab = "alle";
 let activeGenre = null;
 let activeStage = null;
 let currentView = "wissen";
-let filterHidden = false;
-let lastScrollY = 0;
 const bandLookup = {};
 bands.forEach(b=>{bandLookup[b.name]=b;});
-function setFilterHidden(hide){
-  const fw=document.getElementById('filterWrap');
-  if(!fw||hide===filterHidden)return;
-  filterHidden=hide;
-  if(hide){
-    fw.style.maxHeight=fw.scrollHeight+'px';
-    requestAnimationFrame(()=>{fw.style.maxHeight='0px';fw.style.opacity='0';});
-  }else{
-    fw.style.opacity='1';
-    fw.style.maxHeight=fw.scrollHeight+'px';
-    const onEnd=(e)=>{
-      if(e.propertyName==='max-height'&&!filterHidden){fw.style.maxHeight='none';fw.removeEventListener('transitionend',onEnd);}
-    };
-    fw.addEventListener('transitionend',onEnd);
-  }
-}
-function handleWissenScroll(){
-  if(currentView!=='wissen')return;
-  const y=Math.max(0,window.scrollY||document.documentElement.scrollTop);
-  const delta=y-lastScrollY;
-  if(y<50){setFilterHidden(false);lastScrollY=y;return;}
-  if(Math.abs(delta)<6)return;
-  setFilterHidden(delta>0);
-  lastScrollY=y;
-}
-window.addEventListener('scroll',handleWissenScroll,{passive:true});
 let searchQuery = "";
 let sortMode = "bekanntheit";
 const dayDateISO = { mittwoch:"2026-07-29", donnerstag:"2026-07-30", freitag:"2026-07-31", samstag:"2026-08-01" };
@@ -576,12 +548,6 @@ function switchView(v){
   document.getElementById('view-zeitplan').style.display=v==='zeitplan'?'block':'none';
   document.getElementById('btnViewWissen').classList.toggle('active',v==='wissen');
   document.getElementById('btnViewZeitplan').classList.toggle('active',v==='zeitplan');
-  if(v==='wissen'){
-    filterHidden=false;
-    const fw=document.getElementById('filterWrap');
-    if(fw){fw.style.maxHeight='none';fw.style.opacity='1';}
-    lastScrollY=window.scrollY||0;
-  }
   if(v==='zeitplan'){
     renderZeitplan();
     updateLiveBar();
@@ -626,7 +592,6 @@ function render(){
   const list=document.getElementById('bandList');
   list.innerHTML=sorted.length===0?`<div class="no-results">Keine Bands für diese Filterauswahl.</div>`:sorted.map((b,i)=>renderCard(b,i)).join('');
   document.getElementById('bandCount').textContent=`${sorted.length} Band${sorted.length!==1?'s':''} angezeigt`;
-  document.getElementById('filterWrap').style.top=document.querySelector('.header').offsetHeight+'px';
 }
 function parseBandTimes(entry){
   if(entry.zeit==='Abgesagt')return null;
