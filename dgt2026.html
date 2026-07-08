@@ -156,6 +156,42 @@
   .stage-legend span { display:flex; align-items:center; gap:4px; }
 
   .footer-note { text-align:center; font-size: 11px; color: var(--text-dim); margin-top: 24px; padding: 0 20px; line-height:1.6; }
+
+  /* ── SEARCH ── */
+  .search-box { position: relative; margin-bottom: 10px; }
+  .search-input {
+    width: 100%; padding: 9px 14px 9px 34px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--bg-input); color: var(--text);
+    font-size: 13px; font-family: 'Inter', sans-serif;
+  }
+  .search-input::placeholder { color: var(--text-dim); }
+  .search-input:focus { outline: none; border-color: var(--green); }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-dim); pointer-events: none; }
+
+  /* ── SORT TOGGLE ── */
+  .sort-row { display: flex; gap: 6px; }
+  .sort-pill {
+    padding: 5px 13px; font-size: 11.5px; font-weight: 600;
+    border-radius: 20px; border: 1px solid var(--border);
+    background: var(--bg-input); color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .sort-pill.active-sort {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 0 12px rgba(96,165,250,0.25);
+  }
+
+  /* ── LIVE BAR ── */
+  .live-bar { display: none; margin: 4px 0 14px; padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: var(--radius); }
+  .live-bar.show { display: block; }
+  .live-section + .live-section { margin-top: 10px; }
+  .live-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); margin-bottom: 6px; }
+  .live-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .live-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 600; }
+  .live-chip .live-time { color: inherit; opacity: .8; font-weight: 500; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); flex-shrink: 0; animation: livepulse 1.4s infinite; }
+  @keyframes livepulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 </style>
 </head>
 <body>
@@ -170,6 +206,13 @@
 
   <div class="container">
 
+    <div class="live-bar" id="liveBar"></div>
+
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="searchInput" placeholder="Band, Genre oder Herkunft suchen…">
+    </div>
+
     <div class="filter-row" id="dayRow">
       <div class="filter-pill active-day" data-day="alle">Alle</div>
       <div class="filter-pill" data-day="headliner">Headliner</div>
@@ -181,11 +224,13 @@
     <div class="section-header">Genre</div>
     <div class="filter-row" id="genreRow"></div>
 
-    <div class="stage-legend">
-      <span>🐉 Drachenbühne (Hauptbühne)</span>
-      <span>🔥 Endzeit Bühne</span>
-      <span>🌳 Schildhainbühne</span>
-      <span>⚓ Hafenbühne</span>
+    <div class="section-header">Bühne</div>
+    <div class="filter-row" id="stageRow"></div>
+
+    <div class="section-header">Sortierung</div>
+    <div class="sort-row" id="sortRow">
+      <div class="sort-pill active-sort" data-sort="bekanntheit">Bekanntheit</div>
+      <div class="sort-pill" data-sort="spielzeit">⏱ Spielzeit</div>
     </div>
 
     <div class="result-count" id="resultCount"></div>
@@ -208,6 +253,7 @@ const stageInfo = {
 };
 const dayLabel = { freitag: "Freitag", samstag: "Samstag", sonntag: "Sonntag" };
 const dayDate = { freitag: "07.08.", samstag: "08.08.", sonntag: "09.08." };
+const dayDateISO = { freitag: "2026-08-07", samstag: "2026-08-08", sonntag: "2026-08-09" };
 
 const bands = [
   {
@@ -487,6 +533,9 @@ const clusterColors = {
 
 let activeDay = "alle";
 let activeGenre = null;
+let activeStage = null;
+let sortMode = "bekanntheit";
+let searchTerm = "";
 
 function initials(name) {
   return name.split(" ").map(w => w[0]).join("").substring(0,2).toUpperCase();
@@ -527,12 +576,62 @@ function renderGenreRow() {
   });
 }
 
+function renderStageRow() {
+  const row = document.getElementById('stageRow');
+  row.innerHTML = Object.keys(stageInfo).map(name => {
+    const st = stageInfo[name];
+    return `<div class="filter-pill genre-pill" data-stage="${name}" style="border-color:${st.color}66; color:${st.color}; background:${st.bg}">${st.icon} ${name}</div>`;
+  }).join('');
+  row.querySelectorAll('.genre-pill').forEach(el => {
+    el.addEventListener('click', () => {
+      const s = el.getAttribute('data-stage');
+      activeStage = (activeStage === s) ? null : s;
+      renderStageRow();
+      renderBands();
+    });
+    if (el.getAttribute('data-stage') === activeStage) {
+      const st = stageInfo[activeStage];
+      el.classList.add('active');
+      el.style.background = st.color;
+      el.style.color = "#0d1117";
+    }
+  });
+}
+
 function timeSortKey(zeit) {
   if (!zeit) return 9999;
   const start = zeit.split('–')[0];
   const [h, m] = start.split(':').map(Number);
   const hh = h < 6 ? h + 24 : h; // Mitternacht-Slots ans Ende
   return hh * 60 + m;
+}
+
+// Echtes Date-Objekt je Slot (fuer Live-Anzeige & Spielzeit-Sortierung ueber Tage hinweg)
+function parseBandTimes(zeit, tag) {
+  if (!zeit || !dayDateISO[tag]) return null;
+  const [startStr, endStr] = zeit.split(/–|-/).map(s => s.trim());
+  const [sh, sm] = startStr.split(':').map(Number);
+  const [eh, em] = endStr.split(':').map(Number);
+  const start = new Date(dayDateISO[tag] + "T00:00:00");
+  start.setHours(sh, sm, 0, 0);
+  if (sh < 6) start.setDate(start.getDate() + 1);
+  const end = new Date(dayDateISO[tag] + "T00:00:00");
+  end.setHours(eh, em, 0, 0);
+  if (eh < 6) end.setDate(end.getDate() + 1);
+  if (end <= start) end.setDate(end.getDate() + 1);
+  return { start, end };
+}
+
+// Flache Liste aller Einzel-Slots (fuer Live-Anzeige, Buehnen-Filter, Spielzeit-Sortierung)
+const scheduleFlat = [];
+bands.forEach(b => {
+  b.slots.forEach(s => scheduleFlat.push({ name: b.name, tag: s.tag, zeit: s.zeit, buehne: s.buehne, band: b }));
+});
+
+function earliestAbsoluteSlot(b) {
+  const withTimes = b.slots.map(s => ({ s, t: parseBandTimes(s.zeit, s.tag) })).filter(x => x.t);
+  if (!withTimes.length) return null;
+  return withTimes.sort((a, b2) => a.t.start - b2.t.start)[0];
 }
 
 function primarySlotForDay(band, day) {
@@ -552,10 +651,26 @@ function renderBands() {
   if (activeGenre) {
     list = list.filter(b => b.genreCluster === activeGenre);
   }
+  if (activeStage) {
+    list = list.filter(b => b.slots.some(s => s.buehne === activeStage));
+  }
+  if (searchTerm) {
+    const q = searchTerm.toLowerCase();
+    list = list.filter(b => b.name.toLowerCase().includes(q) || b.genre.toLowerCase().includes(q) || b.herkunft.toLowerCase().includes(q));
+  }
 
   const dayView = (activeDay !== "alle" && activeDay !== "headliner");
 
-  if (dayView) {
+  if (sortMode === "spielzeit") {
+    list.sort((a, b) => {
+      const ea = dayView ? parseBandTimes(primarySlotForDay(a, activeDay).zeit, activeDay) : (earliestAbsoluteSlot(a) ? earliestAbsoluteSlot(a).t : null);
+      const eb = dayView ? parseBandTimes(primarySlotForDay(b, activeDay).zeit, activeDay) : (earliestAbsoluteSlot(b) ? earliestAbsoluteSlot(b).t : null);
+      if (!ea && !eb) return 0;
+      if (!ea) return 1;
+      if (!eb) return -1;
+      return ea.start - eb.start;
+    });
+  } else if (dayView) {
     list.sort((a,b) => timeSortKey(primarySlotForDay(a, activeDay).zeit) - timeSortKey(primarySlotForDay(b, activeDay).zeit));
   } else {
     list.sort((a,b) => {
@@ -625,7 +740,67 @@ document.querySelectorAll('#dayRow .filter-pill').forEach(el => {
   });
 });
 
+document.querySelectorAll('#sortRow .sort-pill').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('#sortRow .sort-pill').forEach(e => e.classList.remove('active-sort'));
+    el.classList.add('active-sort');
+    sortMode = el.getAttribute('data-sort');
+    renderBands();
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  searchTerm = e.target.value.trim();
+  renderBands();
+});
+
+// ── Live-Anzeige: "Jetzt läuft" / "Nächste je Bühne" ──
+const weekdayShort = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+function fmtLiveTime(d) {
+  return `${weekdayShort[d.getDay()]} ${d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}`;
+}
+
+function updateLiveBar() {
+  const now = new Date();
+  const parsed = scheduleFlat.map(e => ({ e, t: parseBandTimes(e.zeit, e.tag) })).filter(x => x.t);
+  const live = parsed.filter(x => now >= x.t.start && now < x.t.end);
+  const nextPerStage = Object.keys(stageInfo).map(stage => {
+    const upcoming = parsed.filter(x => x.e.buehne === stage && x.t.start > now).sort((a,b) => a.t.start - b.t.start);
+    return upcoming[0] || null;
+  }).filter(Boolean);
+
+  const bar = document.getElementById('liveBar');
+  if (live.length === 0 && nextPerStage.length === 0) {
+    bar.classList.remove('show');
+    bar.innerHTML = '';
+    return;
+  }
+  bar.classList.add('show');
+
+  let html = '';
+  if (live.length) {
+    html += `<div class="live-section"><div class="live-label">🔴 Jetzt live</div><div class="live-chips">`;
+    html += live.map(x => {
+      const st = stageInfo[x.e.buehne] || { bg: 'rgba(139,148,158,0.12)', color: '#8b949e' };
+      return `<span class="live-chip" style="background:${st.bg}; color:${st.color}"><span class="live-dot"></span>${x.e.name} <span class="live-time">bis ${x.t.end.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</span></span>`;
+    }).join('');
+    html += `</div></div>`;
+  }
+  if (nextPerStage.length) {
+    html += `<div class="live-section"><div class="live-label">⏭ Nächste je Bühne</div><div class="live-chips">`;
+    html += nextPerStage.map(x => {
+      const st = stageInfo[x.e.buehne] || { bg: 'rgba(139,148,158,0.12)', color: '#8b949e' };
+      return `<span class="live-chip" style="background:${st.bg}; color:${st.color}">${st.icon} ${x.e.name} <span class="live-time">${fmtLiveTime(x.t.start)}</span></span>`;
+    }).join('');
+    html += `</div></div>`;
+  }
+  bar.innerHTML = html;
+}
+updateLiveBar();
+setInterval(updateLiveBar, 60000);
+
 renderGenreRow();
+renderStageRow();
 renderBands();
 </script>
 </body>
