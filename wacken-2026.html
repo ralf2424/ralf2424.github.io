@@ -13,13 +13,17 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,Bl
 .container{max-width:720px;margin:0 auto;}
 .header{background:linear-gradient(135deg,#0a0e17 0%,#111827 60%,#0f1e33 100%);padding:22px 24px 18px;border-bottom:1px solid var(--border-dim);text-align:center;position:sticky;top:0;z-index:100;overflow:hidden;}
 .header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(52,211,153,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 50%,rgba(96,165,250,0.04) 0%,transparent 60%);pointer-events:none;}
-.back-btn{position:relative;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text-muted);background:var(--bg-input);border:1px solid var(--border);border-radius:20px;padding:5px 12px 5px 10px;text-decoration:none;margin-bottom:10px;transition:all .15s;}
+.back-btn{position:relative;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text-muted);background:var(--bg-input);border:1px solid var(--border);border-radius:20px;padding:5px 12px 5px 10px;text-decoration:none;transition:all .15s;}
 .back-btn:hover{border-color:var(--green);color:var(--green);}
+.header-nav{position:relative;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.view-btn{position:relative;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text-muted);background:var(--bg-input);border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .15s;user-select:none;font-family:inherit;}
+.view-btn:hover{border-color:var(--green);color:var(--green);}
+.view-btn.active{background:linear-gradient(135deg,#1d4ed8,#1e40af);border-color:transparent;color:#fff;box-shadow:0 0 12px rgba(96,165,250,0.25);}
 .header-logo{font-size:11px;color:var(--green);letter-spacing:2px;text-transform:uppercase;font-weight:700;position:relative;}
 .header-title{font-size:22px;font-weight:700;color:var(--green);margin:4px 0 3px;letter-spacing:-0.3px;position:relative;}
 .header-planer{font-size:11px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;position:relative;}
 .header-sub{font-size:11px;color:var(--text-muted);line-height:1.5;position:relative;}
-.filter-wrap{background:var(--bg-card);border-bottom:1px solid var(--border-dim);padding:10px 12px 8px;position:sticky;top:96px;z-index:90;}
+.filter-wrap{background:var(--bg-card);border-bottom:1px solid var(--border-dim);padding:10px 12px 8px;position:sticky;top:96px;z-index:90;overflow:hidden;transition:max-height .28s ease,opacity .22s ease,padding .28s ease;}
 .filter-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;}
 .filter-sep{display:flex;align-items:center;gap:8px;margin:3px 0 5px;}
 .filter-sep-line{flex:1;height:1px;background:var(--border-dim);}
@@ -86,18 +90,39 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,Bl
 .search-input{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--text);font-family:inherit;}
 .search-input::placeholder{color:var(--text-dim);}
 .search-input:focus{outline:none;border-color:var(--green);}
+.zeitplan-wrap{padding:10px 12px 80px;}
+.day-sep{display:flex;align-items:center;gap:8px;margin:16px 4px 6px;}
+.day-sep:first-child{margin-top:4px;}
+.day-sep-line{flex:1;height:1px;background:var(--border-dim);}
+.day-sep-label{font-size:11px;color:var(--text);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;font-weight:700;}
+.day-sep-date{font-size:10px;color:var(--text-dim);white-space:nowrap;}
+.sched-item{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border-dim);}
+.sched-item.past{opacity:0.45;}
+.sched-item.live{background:rgba(248,113,113,0.06);border-radius:var(--radius);border-bottom-color:transparent;padding:9px 8px;}
+.sched-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--text-dim);}
+.sched-item.live .sched-dot{background:var(--red);animation:livepulse 1.5s infinite;}
+.sched-time{font-size:11px;font-variant-numeric:tabular-nums;color:var(--text-dim);min-width:72px;flex-shrink:0;}
+.sched-item.live .sched-time{color:var(--red);font-weight:700;}
+.sched-name{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sched-item.live .sched-name{color:var(--text);}
+.sched-stage{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.sched-star{color:var(--amber);font-size:10px;flex-shrink:0;}
 </style>
 </head>
 <body>
 <div class="header">
-  <a href="index.html" class="back-btn">← Übersicht</a>
+  <div class="header-nav">
+    <a href="index.html" class="back-btn">← Übersicht</a>
+    <div class="view-btn" id="btnViewWissen" onclick="switchView('wissen')">📋 Wissen</div>
+    <div class="view-btn" id="btnViewZeitplan" onclick="switchView('zeitplan')">🕐 Zeitplan</div>
+  </div>
   <div class="header-logo">⚡ Wacken Open Air · Holy Ground</div>
   <div class="header-title">Ralf's Festival Planer</div>
   <div class="header-planer">Line-up 2026 · 35. Jubiläum</div>
   <div class="header-sub">29. Juli – 01. Aug 2026 · Wacken, Schleswig-Holstein · 130+ Bands · Camping ab 26.07.</div>
 </div>
 <div class="container">
-<div class="live-bar" id="liveBar"></div>
+<div id="view-wissen">
 <div class="filter-wrap" id="filterWrap">
   <div class="search-row"><input type="text" id="searchInput" class="search-input" placeholder="🔍 Band suchen..." oninput="setSearch(this.value)"></div>
   <div class="filter-row" id="row1"></div>
@@ -110,6 +135,11 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,Bl
 </div>
 <div class="band-count" id="bandCount"></div>
 <div class="band-list" id="bandList"></div>
+</div>
+<div id="view-zeitplan" style="display:none;">
+<div class="live-bar" id="liveBar"></div>
+<div class="zeitplan-wrap" id="zeitplanWrap"></div>
+</div>
 </div>
 <script>
 
@@ -377,6 +407,37 @@ const bands = [
 let activeTab = "alle";
 let activeGenre = null;
 let activeStage = null;
+let currentView = "wissen";
+let filterHidden = false;
+let lastScrollY = 0;
+const bandLookup = {};
+bands.forEach(b=>{bandLookup[b.name]=b;});
+function setFilterHidden(hide){
+  const fw=document.getElementById('filterWrap');
+  if(!fw||hide===filterHidden)return;
+  filterHidden=hide;
+  if(hide){
+    fw.style.maxHeight=fw.scrollHeight+'px';
+    requestAnimationFrame(()=>{fw.style.maxHeight='0px';fw.style.opacity='0';});
+  }else{
+    fw.style.opacity='1';
+    fw.style.maxHeight=fw.scrollHeight+'px';
+    const onEnd=(e)=>{
+      if(e.propertyName==='max-height'&&!filterHidden){fw.style.maxHeight='none';fw.removeEventListener('transitionend',onEnd);}
+    };
+    fw.addEventListener('transitionend',onEnd);
+  }
+}
+function handleWissenScroll(){
+  if(currentView!=='wissen')return;
+  const y=Math.max(0,window.scrollY||document.documentElement.scrollTop);
+  const delta=y-lastScrollY;
+  if(y<50){setFilterHidden(false);lastScrollY=y;return;}
+  if(Math.abs(delta)<6)return;
+  setFilterHidden(delta>0);
+  lastScrollY=y;
+}
+window.addEventListener('scroll',handleWissenScroll,{passive:true});
 let searchQuery = "";
 let sortMode = "bekanntheit";
 const dayDateISO = { mittwoch:"2026-07-29", donnerstag:"2026-07-30", freitag:"2026-07-31", samstag:"2026-08-01" };
@@ -509,6 +570,56 @@ function renderCard(b,i){
 </div>
 </div>`;
 }
+function switchView(v){
+  currentView=v;
+  document.getElementById('view-wissen').style.display=v==='wissen'?'block':'none';
+  document.getElementById('view-zeitplan').style.display=v==='zeitplan'?'block':'none';
+  document.getElementById('btnViewWissen').classList.toggle('active',v==='wissen');
+  document.getElementById('btnViewZeitplan').classList.toggle('active',v==='zeitplan');
+  if(v==='wissen'){
+    filterHidden=false;
+    const fw=document.getElementById('filterWrap');
+    if(fw){fw.style.maxHeight='none';fw.style.opacity='1';}
+    lastScrollY=window.scrollY||0;
+  }
+  if(v==='zeitplan'){
+    renderZeitplan();
+    updateLiveBar();
+    setTimeout(()=>{
+      const live=document.querySelector('.sched-item.live')||document.querySelector('.sched-item:not(.past)');
+      if(live)live.scrollIntoView({block:'center'});
+    },0);
+  }
+}
+function renderZeitplan(){
+  const wrap=document.getElementById('zeitplanWrap');
+  if(!wrap)return;
+  const now=new Date();
+  const dayOrder=["mittwoch","donnerstag","freitag","samstag"];
+  let html='';
+  dayOrder.forEach(day=>{
+    const entries=fullSchedule.filter(e=>e.tag===day);
+    if(entries.length===0)return;
+    const parsed=entries.map(e=>({e,t:parseBandTimes(e)})).filter(x=>x.t).sort((a,b)=>a.t.start-b.t.start);
+    html+=`<div class="day-sep"><div class="day-sep-line"></div><div class="day-sep-label">${dayLabel[day]}</div><div class="day-sep-date">${dayDate[day]}</div><div class="day-sep-line"></div></div>`;
+    parsed.forEach(x=>{
+      const info=stageInfo[x.e.buehne]||{icon:'',bg:'rgba(150,150,150,0.15)',color:'#999'};
+      const isLive=now>=x.t.start&&now<x.t.end;
+      const isPast=now>=x.t.end;
+      const band=bandLookup[x.e.name];
+      const star=band&&band.role==='Headliner'?'<span class="sched-star">★</span>':'';
+      const timeStr=`${x.t.start.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}–${x.t.end.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}`;
+      html+=`<div class="sched-item${isLive?' live':''}${isPast&&!isLive?' past':''}">
+  <div class="sched-dot"></div>
+  <div class="sched-time">${timeStr}</div>
+  <div class="sched-name">${x.e.name}</div>
+  ${star}
+  <span class="sched-stage" style="background:${info.bg};color:${info.color}">${info.icon} ${x.e.buehne}</span>
+</div>`;
+    });
+  });
+  wrap.innerHTML=html||'<div class="no-results">Kein Zeitplan verfügbar.</div>';
+}
 function render(){
   renderFilters();
   const sorted=sortBands(filterBands());
@@ -565,8 +676,9 @@ function updateLiveBar(){
   bar.innerHTML=html;
 }
 render();
+switchView('wissen');
 updateLiveBar();
-setInterval(updateLiveBar,60000);
+setInterval(()=>{updateLiveBar();if(currentView==='zeitplan')renderZeitplan();},60000);
 
 </script>
 </body>
