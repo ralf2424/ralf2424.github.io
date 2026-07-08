@@ -110,7 +110,7 @@
   .dot-spark { position: absolute; top: -5px; right: -5px; font-size: 10px; }
   .card-info { flex: 1; min-width: 0; }
   .card-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
-  .card-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .card-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
   .card-stars { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
   .genre-tag { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; }
   .chevron { font-size: 11px; color: var(--text-dim); margin-left: 4px; transition: transform 0.2s; flex-shrink: 0; }
@@ -205,6 +205,9 @@
 <div class="no-results" id="no-results">Keine Bands für diese Kombination gefunden.</div>
 
 <script>
+const dayLabel = { freitag: "Freitag", samstag: "Samstag" };
+const dayDate = { freitag: "28.08.", samstag: "29.08." };
+
 const bands = [
   {
     name: "Dark Tranquillity",
@@ -221,7 +224,6 @@ const bands = [
     gegr: "1989",
     bekanntheit: 5,
     bek_text: "Gothenburg-Legende, weltbekannt",
-    auftritt: "Samstag, 29. Aug",
     zeit: "22:15 – 23:30",
     besonderheit: { icon: "🏛️", text: "Neben At the Gates und In Flames Pioniere des Gothenburg-Sounds – ihre Gründungs-Demo existierte, noch bevor irgendjemand das Genre kannte. Anders Fridén verließ die Band und wurde später Frontmann von In Flames." },
     hits: ["Monochromatic Stains", "The Treason Wall", "Lost to Apathy", "Therein", "Misery's Crown"],
@@ -245,7 +247,6 @@ const bands = [
     gegr: "2012",
     bekanntheit: 3,
     bek_text: "Aufsteiger, starke Fanbase",
-    auftritt: "Freitag, 28. Aug",
     zeit: "21:30 – 22:45",
     besonderheit: { icon: "🍺", text: "Als reines Spaßprojekt gestartet, um den True Metal 'neu zu beleben' – acht Krieger aus Falun, die einzig von Wikingermythen und Mjöd motiviert scheinen. Ihr zweites Album stieg auf Platz 9 der deutschen Charts!" },
     hits: ["Son of Odin", "Emblas Saga", "Yggdrasil", "Fimbulvinter", "Chain Breaker"],
@@ -269,7 +270,6 @@ const bands = [
     gegr: "1990",
     bekanntheit: 3,
     bek_text: "Kult in der Folk-Szene",
-    auftritt: "Freitag, 28. Aug",
     zeit: "19:45 – 21:00",
     besonderheit: { icon: "🎻", text: "Nach nur drei Proben gewannen sie 1990 den zweiten Platz beim Newcomer-Festival in Erlangen – und wurden zum prägenden Irish-Speedfolk-Act Deutschlands. 2000+ Konzerte, kein Major-Label, 100% unabhängig." },
     hits: ["Bells of Norwich", "Granny's", "Jump Jump Dance", "Roseville Fair", "Drive Me Mad"],
@@ -293,7 +293,6 @@ const bands = [
     gegr: "2022",
     bekanntheit: 2,
     bek_text: "Aufsteiger mit Zombie-Konzept",
-    auftritt: "Samstag, 29. Aug",
     zeit: "20:30 – 21:45",
     besonderheit: { icon: "🧟", text: "Zombie-Konzeptband aus Nürnberg! Alle Mitglieder treten nur in Masken auf. Frontmann Dr. Dead liebt The Walking Dead und The Last of Us. Das zweite Album stieg auf Platz 9 der deutschen Charts, das dritte erscheint Juli 2026." },
     hits: ["Hey Living People", "You Spin Me Round", "The Dead Don't Die", "Night Is Calling", "Bad Guy"],
@@ -317,7 +316,6 @@ const bands = [
     gegr: "2006",
     bekanntheit: 2,
     bek_text: "Underground-Legende, Back from the Dead",
-    auftritt: "Samstag, 29. Aug",
     zeit: "19:00 – 20:00",
     besonderheit: { icon: "🎸", text: "Wahrscheinlich jüngste Band, die je einen Nuclear-Blast-Plattenvertrag bekam: Die Mitglieder waren bei Vertragsunterzeichnung durchschnittlich 14–16 Jahre alt! Von 2016 bis 2025 inaktiv – jetzt zurück." },
     hits: ["Gut Candy", "Burn After Reaping", "Carnival Cadavre", "Death Prevails"],
@@ -341,7 +339,6 @@ const bands = [
     gegr: "1997",
     bekanntheit: 2,
     bek_text: "Szene-Institution, Battle Metal",
-    auftritt: "Freitag, 28. Aug",
     zeit: "18:30 – 19:15",
     besonderheit: { icon: "⚔️", text: "Nennen ihren Stil selbst 'Battle Metal' – eine Mischung aus Melodic Death, Black Metal und Viking Metal mit Texten auf Deutsch über bergische Heimat und Nordmythologie. Seit 1997 konsequent underground und unabhängig." },
     hits: ["Skogarmaors", "Ewige Wacht", "Streitmacht", "Bergisch Land", "Fimbulwinter"],
@@ -365,7 +362,6 @@ const bands = [
     gegr: "2024",
     bekanntheit: 1,
     bek_text: "Newcomer, Debütsingle 2024",
-    auftritt: "Samstag, 29. Aug",
     zeit: "17:45 – 18:30",
     besonderheit: { icon: "🌟", text: "Brandneue Band: Debütsingle Kingdom of the Sky erschien Dezember 2024, gefilmt an den mystischen Externsteinen im Teutoburger Wald. Frontfrau Dorothée Kahler ist ausgebildete Schauspielerin – die Bühnenshow sitzt." },
     hits: ["Kingdom of the Sky", "Legacy of Life"],
@@ -389,7 +385,6 @@ const bands = [
     gegr: "2010",
     bekanntheit: 2,
     bek_text: "Unterschätzt, aber stark",
-    auftritt: "Freitag, 28. Aug",
     zeit: "17:30 – 18:10",
     besonderheit: { icon: "💧", text: "Bring The Rain (2019) wurde allein auf Spotify über 2,5 Millionen Mal gestreamt – ein phänomenaler Erfolg für eine unabhängige Band aus dem Saarland ohne Majorvertrag." },
     hits: ["Bring the Rain", "Shatter Me", "Better Man", "The Neverending Now", "Travails"],
@@ -413,7 +408,6 @@ const bands = [
     gegr: "2022",
     bekanntheit: 2,
     bek_text: "Rising Force, Arising Empire",
-    auftritt: "Samstag, 29. Aug",
     zeit: "00:00 – 01:00",
     besonderheit: { icon: "🌧️", text: "Zweites Album The Anatomy of Surviving erschien März 2026 – direkt vor dem Festival! Trotz Gründung 2022 bereits bei Arising Empire (Label von Parkway Drive & Architects) unter Vertrag." },
     hits: ["Like a Nightmare", "Hysteria", "Crown of Thorns", "Blackout", "The Devil & Lovers"],
@@ -437,7 +431,6 @@ const bands = [
     gegr: "2021",
     bekanntheit: 2,
     bek_text: "Aufsteiger, Deathcore-Wucht",
-    auftritt: "Samstag, 29. Aug",
     zeit: "16:35 – 17:20",
     besonderheit: { icon: "🔥", text: "Debüt-Vollalbum Dealers of Doom (2025) via Arising Empire erschien gerade mal ein Jahr nach der ersten EP – rasantes Tempo für eine Band, die erst 2021 gegründet wurde." },
     hits: ["Currents", "Dig", "Deadweight", "Never Enough", "Make Sure It Hurts"],
@@ -461,7 +454,6 @@ const bands = [
     gegr: "2014",
     bekanntheit: 2,
     bek_text: "Festival-Stamm, starke Live-Band",
-    auftritt: "Freitag, 28. Aug",
     zeit: "23:15 – 00:15",
     besonderheit: { icon: "🎙️", text: "Tourten 2022 als Vorgruppe von Dark Tranquillity und Ensiferum durch Frankreich und Spanien – und spielen jetzt mit Dark Tranquillity auf dem gleichen Festival! WDR Rockpalast-Aufzeichnung 2021." },
     hits: ["Painkiller", "Not Sorry", "Bring It Back", "Rodeo", "Fighter"],
@@ -485,7 +477,6 @@ const bands = [
     gegr: "2023",
     bekanntheit: 1,
     bek_text: "Newcomer, frisch aus dem Underground",
-    auftritt: "Slot noch offen",
     zeit: "",
     besonderheit: { icon: "🎻", text: "Orchestrale Elemente, Chöre und Synths im Deathcore-Gewand – Ruin Rising aus Westösterreich wollen das Subgenre Symphonic Deathcore für sich beanspruchen. Erstes Album Kingdom of Misery (2024) als Independent-Release." },
     hits: ["Kingdom of Misery", "Violent Thoughts", "Final Breath", "Doomed Sons", "Forsaken Souls"],
@@ -545,7 +536,7 @@ bands.forEach(band => {
   card.dataset.tag = band.tag;
   card.dataset.cluster = band.genreCluster;
 
-  const zeitStr = band.zeit ? `⏱ ${band.zeit}` : '⏱ Zeit noch offen';
+  const zeitStr = band.zeit ? `⏱ ${dayLabel[band.tag]}, ${dayDate[band.tag]} · ${band.zeit}` : '⏱ Zeit noch offen';
   let badgeHtml = '';
   if (band.role === 'Topact') badgeHtml = '<span class="topact-badge">Topact</span>';
   if (band.tag === 'tba') badgeHtml += '<span class="tba-badge">TBA</span>';
