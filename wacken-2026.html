@@ -71,6 +71,21 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,Bl
 .link-web{background:rgba(96,165,250,0.08);border-color:rgba(96,165,250,0.25);color:var(--blue);}
 .link-web:hover{background:rgba(96,165,250,0.15);}
 .no-results{text-align:center;padding:60px 20px;color:var(--text-dim);font-size:13px;}
+.live-bar{display:none;margin:10px 12px 0;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border-dim);border-radius:var(--radius);box-shadow:var(--shadow);}
+.live-bar-section+.live-bar-section{margin-top:8px;padding-top:8px;border-top:1px solid var(--border-dim);}
+.live-bar-heading{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.live-dot,.next-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.live-dot{background:var(--red);animation:livepulse 1.5s infinite;}
+.next-dot{background:var(--blue);}
+@keyframes livepulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
+.live-chip-row{display:flex;flex-wrap:wrap;gap:5px;}
+.live-chip{display:flex;align-items:center;gap:5px;border-radius:20px;padding:4px 10px 4px 8px;font-size:11.5px;font-weight:600;border:1px solid;white-space:nowrap;}
+.live-chip-stage{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;opacity:0.85;}
+.live-chip-time{font-size:10px;font-weight:700;color:inherit;opacity:.8;}
+.search-row{margin-bottom:8px;}
+.search-input{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--text);font-family:inherit;}
+.search-input::placeholder{color:var(--text-dim);}
+.search-input:focus{outline:none;border-color:var(--green);}
 </style>
 </head>
 <body>
@@ -82,10 +97,16 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,Bl
   <div class="header-sub">29. Juli – 01. Aug 2026 · Wacken, Schleswig-Holstein · 130+ Bands · Camping ab 26.07.</div>
 </div>
 <div class="container">
+<div class="live-bar" id="liveBar"></div>
 <div class="filter-wrap" id="filterWrap">
+  <div class="search-row"><input type="text" id="searchInput" class="search-input" placeholder="🔍 Band suchen..." oninput="setSearch(this.value)"></div>
   <div class="filter-row" id="row1"></div>
   <div class="filter-sep"><div class="filter-sep-line"></div><div class="filter-sep-label">Genre</div><div class="filter-sep-line"></div></div>
   <div class="filter-genre-row" id="genreRow"></div>
+  <div class="filter-sep"><div class="filter-sep-line"></div><div class="filter-sep-label">Bühne</div><div class="filter-sep-line"></div></div>
+  <div class="filter-genre-row" id="stageRow"></div>
+  <div class="filter-sep"><div class="filter-sep-line"></div><div class="filter-sep-label">Sortierung</div><div class="filter-sep-line"></div></div>
+  <div class="filter-row" id="sortRow"></div>
 </div>
 <div class="band-count" id="bandCount"></div>
 <div class="band-list" id="bandList"></div>
@@ -102,6 +123,159 @@ const stageInfo = {
   "Wasteland Stage": { icon: "☢️", bg: "rgba(216,90,48,0.18)", color: "#e87a50" },
 };
 const dayLabel = { mittwoch: "Mittwoch", donnerstag: "Donnerstag", freitag: "Freitag", samstag: "Samstag" };
+// Vollstaendiger Zeitplan (alle 149 Acts, alle Buehnen) - nur fuer Live-/Naechste-Anzeige, unabhaengig von der kuratierten bands-Liste
+const fullSchedule = [
+  {name:'Wacken Firefighters',tag:'mittwoch',zeit:'12:00–12:45',buehne:'Wackinger Stage'},
+  {name:'Broken by the Scream',tag:'mittwoch',zeit:'12:00–12:45',buehne:'Louder'},
+  {name:'Visions of Atlantis',tag:'mittwoch',zeit:'13:30–14:30',buehne:'Louder'},
+  {name:'Alien Rockin\' Explosion',tag:'mittwoch',zeit:'13:30–14:15',buehne:'Wackinger Stage'},
+  {name:'Diabolisches Werk',tag:'mittwoch',zeit:'14:00–14:45',buehne:'Wasteland Stage'},
+  {name:'Expellow',tag:'mittwoch',zeit:'14:45–15:45',buehne:'Headbangers Stage'},
+  {name:'5th Avenue',tag:'mittwoch',zeit:'15:00–16:00',buehne:'Wackinger Stage'},
+  {name:'Thundermother',tag:'mittwoch',zeit:'15:15–16:15',buehne:'Louder'},
+  {name:'Battlecreek',tag:'mittwoch',zeit:'15:30–16:15',buehne:'Wasteland Stage'},
+  {name:'Lovebites',tag:'mittwoch',zeit:'16:00–17:00',buehne:'Faster'},
+  {name:'Ricky Warwick',tag:'mittwoch',zeit:'16:45–17:45',buehne:'Wackinger Stage'},
+  {name:'Poison the Preacher',tag:'mittwoch',zeit:'17:00–17:45',buehne:'Wasteland Stage'},
+  {name:'The Hardkiss',tag:'mittwoch',zeit:'17:00–18:00',buehne:'Louder'},
+  {name:'The Butcher Sisters',tag:'mittwoch',zeit:'18:00–19:00',buehne:'Faster'},
+  {name:'Phantom',tag:'mittwoch',zeit:'18:30–19:15',buehne:'Wasteland Stage'},
+  {name:'Vanir',tag:'mittwoch',zeit:'18:30–19:30',buehne:'Wackinger Stage'},
+  {name:'The Gathering',tag:'mittwoch',zeit:'18:45–20:00',buehne:'Louder'},
+  {name:'Crypt Sermon',tag:'mittwoch',zeit:'20:00–20:45',buehne:'Wasteland Stage'},
+  {name:'Electric Bassboy',tag:'mittwoch',zeit:'20:00–21:00',buehne:'Faster'},
+  {name:'Velvet Rush',tag:'mittwoch',zeit:'20:15–21:00',buehne:'W:E:T Stage'},
+  {name:'Dirty Shirt',tag:'mittwoch',zeit:'20:15–21:15',buehne:'Wackinger Stage'},
+  {name:'Lacuna Coil',tag:'mittwoch',zeit:'21:00–22:30',buehne:'Louder'},
+  {name:'Kadavar',tag:'mittwoch',zeit:'21:15–22:30',buehne:'Headbangers Stage'},
+  {name:'The Troops of Doom',tag:'mittwoch',zeit:'21:30–22:15',buehne:'Wasteland Stage'},
+  {name:'Hämatom',tag:'mittwoch',zeit:'22:00–00:00',buehne:'Faster'},
+  {name:'Unzucht',tag:'mittwoch',zeit:'22:15–23:15',buehne:'Wackinger Stage'},
+  {name:'Rose Tattoo',tag:'mittwoch',zeit:'22:45–00:00',buehne:'W:E:T Stage'},
+  {name:'Sacred Steel',tag:'mittwoch',zeit:'23:00–00:00',buehne:'Wasteland Stage'},
+  {name:'Mambo Kurt',tag:'mittwoch',zeit:'00:15–01:00',buehne:'Headbangers Stage'},
+  {name:'Alien Ant Farm',tag:'donnerstag',zeit:'12:00–13:00',buehne:'Louder'},
+  {name:'Wüstenberg',tag:'donnerstag',zeit:'12:00–12:45',buehne:'Wackinger Stage'},
+  {name:'Katerfahrt',tag:'donnerstag',zeit:'13:30–14:15',buehne:'Wackinger Stage'},
+  {name:'H-Blockx',tag:'donnerstag',zeit:'13:45–14:45',buehne:'Louder'},
+  {name:'Saviourself',tag:'donnerstag',zeit:'14:00–14:30',buehne:'Wasteland Stage'},
+  {name:'Skyline',tag:'donnerstag',zeit:'15:00–16:00',buehne:'Faster'},
+  {name:'Vogelfrey',tag:'donnerstag',zeit:'15:00–16:00',buehne:'Wackinger Stage'},
+  {name:'Black Tish',tag:'donnerstag',zeit:'15:00–15:30',buehne:'Wasteland Stage'},
+  {name:'Therapy?',tag:'donnerstag',zeit:'15:30–16:30',buehne:'Louder'},
+  {name:'Brunhilde',tag:'donnerstag',zeit:'16:00–16:45',buehne:'Wasteland Stage'},
+  {name:'Uli Jon Roth',tag:'donnerstag',zeit:'16:15–17:15',buehne:'Harder'},
+  {name:'Craft',tag:'donnerstag',zeit:'16:15–17:00',buehne:'W:E:T Stage'},
+  {name:'Sagenbringer',tag:'donnerstag',zeit:'16:45–17:45',buehne:'Wackinger Stage'},
+  {name:'9mm Headshot',tag:'donnerstag',zeit:'17:15–18:00',buehne:'Wasteland Stage'},
+  {name:'Firespawn',tag:'donnerstag',zeit:'17:15–18:00',buehne:'Headbangers Stage'},
+  {name:'Life of Agony',tag:'donnerstag',zeit:'17:30–18:45',buehne:'Louder'},
+  {name:'Yngwie Malmsteen',tag:'donnerstag',zeit:'17:30–18:45',buehne:'Faster'},
+  {name:'Spectral Wound',tag:'donnerstag',zeit:'18:15–19:00',buehne:'W:E:T Stage'},
+  {name:'Wytch Hazel',tag:'donnerstag',zeit:'18:30–19:15',buehne:'Wasteland Stage'},
+  {name:'Storm Seeker',tag:'donnerstag',zeit:'18:30–19:30',buehne:'Wackinger Stage'},
+  {name:'Europe',tag:'donnerstag',zeit:'19:00–20:15',buehne:'Harder'},
+  {name:'Blood Red Throne',tag:'donnerstag',zeit:'19:15–20:15',buehne:'Headbangers Stage'},
+  {name:'P.O.D.',tag:'donnerstag',zeit:'19:45–21:00',buehne:'Louder'},
+  {name:'Temple of the Absurd',tag:'donnerstag',zeit:'19:45–20:45',buehne:'Wasteland Stage'},
+  {name:'Kupfergold',tag:'donnerstag',zeit:'20:15–21:15',buehne:'Wackinger Stage'},
+  {name:'Savatage',tag:'donnerstag',zeit:'20:30–22:00',buehne:'Faster'},
+  {name:'Misery Index',tag:'donnerstag',zeit:'20:30–21:30',buehne:'W:E:T Stage'},
+  {name:'Evil Jared x Krogi',tag:'donnerstag',zeit:'21:15–22:15',buehne:'Wasteland Stage'},
+  {name:'Anaal Nathrakh',tag:'donnerstag',zeit:'21:45–22:45',buehne:'Headbangers Stage'},
+  {name:'Turbonegro',tag:'donnerstag',zeit:'22:00–23:30',buehne:'Louder'},
+  {name:'Def Leppard',tag:'donnerstag',zeit:'22:15–00:00',buehne:'Harder'},
+  {name:'Manntra',tag:'donnerstag',zeit:'22:15–23:15',buehne:'Wackinger Stage'},
+  {name:'Year of the Goat',tag:'donnerstag',zeit:'23:00–00:00',buehne:'Wasteland Stage'},
+  {name:'Misþyrming & Nergal',tag:'donnerstag',zeit:'23:00–00:00',buehne:'W:E:T Stage'},
+  {name:'Mr. Hurley und die Pulveraffen',tag:'freitag',zeit:'12:00–13:00',buehne:'Louder'},
+  {name:'Ten56',tag:'freitag',zeit:'12:00–12:45',buehne:'Headbangers Stage'},
+  {name:'tuXedoo',tag:'freitag',zeit:'12:00–12:45',buehne:'Wackinger Stage'},
+  {name:'Gutalax',tag:'freitag',zeit:'12:30–13:30',buehne:'Faster'},
+  {name:'Employed to Serve',tag:'freitag',zeit:'13:00–13:45',buehne:'W:E:T Stage'},
+  {name:'Blaas of Glory',tag:'freitag',zeit:'13:15–13:45',buehne:'Wackinger Stage'},
+  {name:'Vreid',tag:'freitag',zeit:'13:30–14:15',buehne:'Harder'},
+  {name:'Future Palace',tag:'freitag',zeit:'13:45–14:45',buehne:'Louder'},
+  {name:'Grand Magus',tag:'freitag',zeit:'14:00–14:45',buehne:'Headbangers Stage'},
+  {name:'Heartless Human Harvest',tag:'freitag',zeit:'14:00–14:30',buehne:'Wasteland Stage'},
+  {name:'Metaklapa',tag:'freitag',zeit:'14:15–15:00',buehne:'Wackinger Stage'},
+  {name:'Paradise Lost',tag:'freitag',zeit:'14:30–15:30',buehne:'Faster'},
+  {name:'Deafheaven',tag:'freitag',zeit:'15:00–15:45',buehne:'W:E:T Stage'},
+  {name:'Cursed Abyss',tag:'freitag',zeit:'15:00–15:30',buehne:'Wasteland Stage'},
+  {name:'Mantar',tag:'freitag',zeit:'15:30–16:30',buehne:'Louder'},
+  {name:'TROLD',tag:'freitag',zeit:'15:30–16:15',buehne:'Wackinger Stage'},
+  {name:'Danko Jones',tag:'freitag',zeit:'15:45–16:45',buehne:'Harder'},
+  {name:'Any Given Day',tag:'freitag',zeit:'16:00–16:45',buehne:'Headbangers Stage'},
+  {name:'Chaosbay',tag:'freitag',zeit:'16:00–16:45',buehne:'Wasteland Stage'},
+  {name:'Black Label Society',tag:'freitag',zeit:'17:00–18:00',buehne:'Faster'},
+  {name:'The Haunted',tag:'freitag',zeit:'17:00–17:45',buehne:'W:E:T Stage'},
+  {name:'Cruachan',tag:'freitag',zeit:'17:00–18:00',buehne:'Wackinger Stage'},
+  {name:'Paleface Swiss',tag:'freitag',zeit:'17:15–18:15',buehne:'Louder'},
+  {name:'Luna Kills',tag:'freitag',zeit:'17:15–18:00',buehne:'Wasteland Stage'},
+  {name:'Pig Destroyer',tag:'freitag',zeit:'18:00–18:45',buehne:'Headbangers Stage'},
+  {name:'Saxon',tag:'freitag',zeit:'18:15–19:30',buehne:'Harder'},
+  {name:'Insanity Alert',tag:'freitag',zeit:'18:30–19:15',buehne:'Wasteland Stage'},
+  {name:'Eläkeläiset',tag:'freitag',zeit:'18:45–19:45',buehne:'Wackinger Stage'},
+  {name:'Hatebreed',tag:'freitag',zeit:'19:00–20:00',buehne:'Louder'},
+  {name:'Animals As Leaders',tag:'freitag',zeit:'19:00–19:45',buehne:'W:E:T Stage'},
+  {name:'In Flames',tag:'freitag',zeit:'19:45–21:15',buehne:'Faster'},
+  {name:'Arroganz',tag:'freitag',zeit:'19:45–20:45',buehne:'Wasteland Stage'},
+  {name:'Bear McCreary',tag:'freitag',zeit:'20:00–21:00',buehne:'Headbangers Stage'},
+  {name:'Dubioza Kolektiv',tag:'freitag',zeit:'20:30–21:30',buehne:'Wackinger Stage'},
+  {name:'Blood Fire Death',tag:'freitag',zeit:'20:45–22:00',buehne:'Louder'},
+  {name:'Crematory',tag:'freitag',zeit:'21:15–22:15',buehne:'W:E:T Stage'},
+  {name:'Divlje Jagode',tag:'freitag',zeit:'21:15–22:15',buehne:'Wasteland Stage'},
+  {name:'Judas Priest',tag:'freitag',zeit:'21:30–23:00',buehne:'Harder'},
+  {name:'Faun',tag:'freitag',zeit:'22:15–23:15',buehne:'Wackinger Stage'},
+  {name:'Bleed from Within',tag:'freitag',zeit:'22:30–23:30',buehne:'Headbangers Stage'},
+  {name:'Emperor',tag:'freitag',zeit:'22:45–00:00',buehne:'Louder'},
+  {name:'Alfahanne',tag:'freitag',zeit:'23:00–00:00',buehne:'Wasteland Stage'},
+  {name:'Running Wild',tag:'freitag',zeit:'23:15–00:45',buehne:'Faster'},
+  {name:'Skynd',tag:'freitag',zeit:'23:45–00:45',buehne:'W:E:T Stage'},
+  {name:'Subway to Sally',tag:'freitag',zeit:'00:45–02:00',buehne:'Louder'},
+  {name:'Sepultura',tag:'freitag',zeit:'01:00–02:15',buehne:'Harder'},
+  {name:'Alcest',tag:'freitag',zeit:'01:00–02:00',buehne:'Headbangers Stage'},
+  {name:'Heavysaurus',tag:'samstag',zeit:'11:30–12:15',buehne:'Harder'},
+  {name:'Focus.',tag:'samstag',zeit:'12:00–12:45',buehne:'Headbangers Stage'},
+  {name:'Kim Dracula',tag:'samstag',zeit:'12:30–13:30',buehne:'Faster'},
+  {name:'Blood Command',tag:'samstag',zeit:'13:00–13:45',buehne:'W:E:T Stage'},
+  {name:'Minotaurus',tag:'samstag',zeit:'13:30–14:15',buehne:'Wackinger Stage'},
+  {name:'Kittie',tag:'samstag',zeit:'13:45–14:45',buehne:'Louder'},
+  {name:'Orbit Culture',tag:'samstag',zeit:'13:45–14:45',buehne:'Harder'},
+  {name:'Crimson Glory',tag:'samstag',zeit:'14:00–14:45',buehne:'Headbangers Stage'},
+  {name:'Nevermore',tag:'samstag',zeit:'15:00–16:00',buehne:'Faster'},
+  {name:'Our Promise',tag:'samstag',zeit:'15:00–15:45',buehne:'W:E:T Stage'},
+  {name:'Stonem',tag:'samstag',zeit:'15:00–15:30',buehne:'Wasteland Stage'},
+  {name:'Thrown',tag:'samstag',zeit:'15:30–16:30',buehne:'Louder'},
+  {name:'Angelus Apatrida',tag:'samstag',zeit:'16:00–16:45',buehne:'Headbangers Stage'},
+  {name:'Asrock',tag:'samstag',zeit:'16:00–16:45',buehne:'Wasteland Stage'},
+  {name:'Lamb of God',tag:'samstag',zeit:'16:15–17:15',buehne:'Harder'},
+  {name:'Hardline',tag:'samstag',zeit:'17:00–17:45',buehne:'W:E:T Stage'},
+  {name:'Allt',tag:'samstag',zeit:'17:15–18:00',buehne:'Wasteland Stage'},
+  {name:'Airbourne',tag:'samstag',zeit:'17:30–18:45',buehne:'Faster'},
+  {name:'Municipal Waste',tag:'samstag',zeit:'18:00–18:45',buehne:'Headbangers Stage'},
+  {name:'The Other',tag:'samstag',zeit:'18:30–19:15',buehne:'Wasteland Stage'},
+  {name:'Ad Infinitum',tag:'samstag',zeit:'18:30–19:30',buehne:'Wackinger Stage'},
+  {name:'Arch Enemy',tag:'samstag',zeit:'19:00–20:30',buehne:'Harder'},
+  {name:'Lagwagon',tag:'samstag',zeit:'19:00–19:45',buehne:'W:E:T Stage'},
+  {name:'Kärbholz',tag:'samstag',zeit:'19:00–20:00',buehne:'Louder'},
+  {name:'Castle Rat',tag:'samstag',zeit:'19:45–20:45',buehne:'Wasteland Stage'},
+  {name:'Dritte Wahl',tag:'samstag',zeit:'20:00–21:00',buehne:'Headbangers Stage'},
+  {name:'Finsterforst',tag:'samstag',zeit:'20:15–21:15',buehne:'Wackinger Stage'},
+  {name:'Powerwolf',tag:'samstag',zeit:'20:45–22:30',buehne:'Faster'},
+  {name:'Thy Art Is Murder',tag:'samstag',zeit:'20:45–21:45',buehne:'Louder'},
+  {name:'Corrosion of Conformity',tag:'samstag',zeit:'21:15–22:15',buehne:'W:E:T Stage'},
+  {name:'Guilt Trip',tag:'samstag',zeit:'21:15–22:15',buehne:'Wasteland Stage'},
+  {name:'Einherjer',tag:'samstag',zeit:'22:15–23:15',buehne:'Wackinger Stage'},
+  {name:'Vended',tag:'samstag',zeit:'22:30–23:30',buehne:'Headbangers Stage'},
+  {name:'Triptykon',tag:'samstag',zeit:'22:45–00:00',buehne:'Louder'},
+  {name:'Sabaton',tag:'samstag',zeit:'23:00–00:45',buehne:'Harder'},
+  {name:'Hackneyed',tag:'samstag',zeit:'23:00–00:00',buehne:'Wasteland Stage'},
+  {name:'Fit For An Autopsy',tag:'samstag',zeit:'23:45–00:45',buehne:'W:E:T Stage'},
+  {name:'Alestorm',tag:'samstag',zeit:'01:00–02:00',buehne:'Faster'},
+  {name:'The Limit',tag:'samstag',zeit:'01:00–02:00',buehne:'Headbangers Stage'},
+];
+
 const dayDate = { mittwoch: "29.07.", donnerstag: "30.07.", freitag: "31.07.", samstag: "01.08." };
 
 const bands = [
@@ -158,6 +332,26 @@ const bands = [
   {name:"Visions of Atlantis",role:"Support",tag:"mittwoch",country:"at",genre:"Symphonic Metal",genreCluster:"Metalcore",genreBg:"rgba(127,119,221,0.18)",genreColor:"#9990e8",dotBg:"rgba(127,119,221,0.25)",dotColor:"#9990e8",herkunft:"Graz, Österreich",gegr:"2000",bekanntheit:3,bek_text:"Symphonic-Metal-Perle",zeit:"13:30–14:30",buehne:"Louder",abschied:false,besonderheit:{icon:"🌊",text:"Visions of Atlantis spielen Piratensymphonic-Metal – Clémentine Delauney's Sopranstimme kombiniert mit heavy Gitarren ist ein eigenes Klanguniversum."},hits:["A Life Worth Dying For","Pirates Will Return","Melancholy Angel","Return to Lemuria"],geschichte:"2000 in Graz gegründet. Mit Pirates (2022) internationaler Durchbruch. Mittwoch-Act auf dem Holy Ground.",tipp:"Für alle die Nightwish mögen aber mehr Pirat wollen.",website:"https://www.visions-of-atlantis.com",spotify:"https://open.spotify.com/artist/04jbCUFxOHxTFVLtf58VkR"},
   {name:"Unzucht",role:"Support",tag:"mittwoch",country:"de",genre:"Dark Rock / Gothic Rock",genreCluster:"Electronic / Pop",genreBg:"rgba(20,160,180,0.18)",genreColor:"#20a0c0",dotBg:"rgba(20,160,180,0.25)",dotColor:"#20a0c0",herkunft:"Hannover, Deutschland",gegr:"2007",bekanntheit:2,bek_text:"Dark-Rock-Aufsteiger",zeit:"22:15–23:15",buehne:"Wackinger Stage",abschied:false,besonderheit:{icon:"🌑",text:"Unzucht charteten in den deutschen Album-Top-20 mit deutschen Dark-Rock-Texten weit über die Gothic-Szene hinaus."},hits:["Brennen","Warte","Herz aus Gold","Schwarzes Gold","Im Regen"],geschichte:"2007 in Hannover gegründet, kombinieren Unzucht Gothic Rock mit modernen Rock-Elementen und deutschen Texten.",tipp:"Mittwoch-Heimspiel für alle deutschen Dark-Rock-Fans.",website:"https://www.unzucht-band.de",spotify:"https://open.spotify.com/artist/0DzLFqW9uAKF8qmh7EzUJo"},
   {name:"Vanir",role:"Support",tag:"mittwoch",country:"dk",genre:"Viking Metal / Folk Metal",genreCluster:"Power / Viking",genreBg:"rgba(186,117,23,0.18)",genreColor:"#c89030",dotBg:"rgba(186,117,23,0.25)",dotColor:"#c89030",herkunft:"Kopenhagen, Dänemark",gegr:"2006",bekanntheit:2,bek_text:"Dänischer Viking-Metal",zeit:"18:30–19:30",buehne:"Wackinger Stage",abschied:false,besonderheit:{icon:"⚡",text:"Vanir sind benannt nach dem altnordischen Götterstamm und verbinden nordische Mythologie mit modernem Viking Metal auf akademisch fundiertem Niveau."},hits:["Asgard","Tales of Yore","Svartur Fiskur","Thor's Hammer"],geschichte:"2006 in Kopenhagen gegründet, spielen Vanir Viking Metal tief verwurzelt in nordischer Mythologie.",tipp:"Mittwoch-Wikinger-Warm-Up.",website:"https://www.vanir.dk",spotify:"https://open.spotify.com/artist/3s7FJp3xQ0wPoBq0pTDw6Q"},
+  {name:"Wacken Firefighters",role:"Support",tag:"mittwoch",country:"de",genre:"Blaskapelle / Metal-Cover",genreCluster:"Rock / Hard Rock",genreBg:"rgba(99,153,34,0.18)",genreColor:"#7bbf30",dotBg:"rgba(99,153,34,0.25)",dotColor:"#7bbf30",herkunft:"Wacken, Deutschland",gegr:"1900 (Musikzug), seit 2000 als Wacken Firefighters",bekanntheit:2,bek_text:"Kult-Blaskapelle, Festival-Institution",zeit:"12:00–12:45",buehne:"Wackinger Stage",abschied:false,besonderheit:{icon:"🚒",text:"Der Musikzug der freiwilligen Feuerwehr Wacken eröffnet das Festival seit 2000 unter dem Motto „Metal meets Brass” – Metal-Klassiker als Blasmusik-Arrangement, jedes Jahr vor tausenden feiernden Fans."},hits:["Rosamunde","Zillertaler Hochzeitsmarsch","Metal-Klassiker als Blasmusik"],geschichte:"Der Musikzug der Freiwilligen Feuerwehr Wacken geht auf das Jahr 1900 zurück. Seit dem Jahr 2000 eröffnet er inoffiziell das Wacken Open Air – mittlerweile ein fester Programmpunkt, über den sogar der Spiegel berichtete.",tipp:"Der Festival-Auftakt schlechthin – Blasmusik trifft Moshpit, das muss man erlebt haben.",website:"https://www.wacken-firefighters.com",spotify:null},
+  {name:"Broken by the Scream",role:"Support",tag:"mittwoch",country:"jp",genre:"Metal-Idol / Metalcore / Djent",genreCluster:"Metalcore",genreBg:"rgba(127,119,221,0.18)",genreColor:"#9990e8",dotBg:"rgba(127,119,221,0.25)",dotColor:"#9990e8",herkunft:"Tokio, Japan",gegr:"2016",bekanntheit:2,bek_text:"Japanische Metal-Idol-Sensation",zeit:"12:00–12:45",buehne:"Louder",abschied:false,besonderheit:{icon:"🎀",text:"Broken by the Scream verbinden Idol-Choreografie mit Growls, Screams und Djent-Riffs – 2026 frisch bei Metal Blade Records unter Vertrag und mit erster W:O:A-Show."},hits:["Tsuioku no Nasca","Solar Strain","ReMake Them Joy"],geschichte:"2016 in Tokio gegründet, debütierten Broken by the Scream 2017 als „screaming metal idol”-Gruppe. Nach Touren durch Asien, die USA und Europa unterschrieb die Band Anfang 2026 bei Metal Blade Records.",tipp:"Kawaii Metal at its extremest – Growls und Idol-Pop in einem Paket.",website:null,spotify:null},
+  {name:"Diabolisches Werk",role:"Support",tag:"mittwoch",country:"de",genre:"Death/Thrash Metal",genreCluster:"Death / Thrash",genreBg:"rgba(180,40,40,0.18)",genreColor:"#cc4040",dotBg:"rgba(180,40,40,0.25)",dotColor:"#cc4040",herkunft:"Kiel, Deutschland",gegr:"2020",bekanntheit:1,bek_text:"Newcomer, blasphemischer Death/Thrash",zeit:"14:00–14:45",buehne:"Wasteland Stage",abschied:false,besonderheit:{icon:"☠️",text:"Als Dreier-Formation während der Pandemie gegründet, veröffentlichte die Kieler Band 2025 ihr zweites Album „Against All Gods” bei Apostasy Records."},hits:["Non-Prophet","Soul Liberator","Against All Gods"],geschichte:"2020 in Kiel als Dreier-Besetzung gegründet, verstärkten sich Diabolisches Werk bald um ein viertes Mitglied. Mit dem Debüt „Beast” (2021) und dem Nachfolger „Against All Gods” (2025) etablierten sie sich in der deutschen Death/Thrash-Szene.",tipp:"Roher, norddeutscher Death/Thrash zum Wasted-Wednesday-Auftakt.",website:null,spotify:"https://open.spotify.com/artist/0mdu8tTvytKczjlIVh78oJ"},
+  {name:"Expellow",role:"Support",tag:"mittwoch",country:"ch",genre:"Metalcore",genreCluster:"Metalcore",genreBg:"rgba(127,119,221,0.18)",genreColor:"#9990e8",dotBg:"rgba(127,119,221,0.25)",dotColor:"#9990e8",herkunft:"Regensdorf/Zürich, Schweiz",gegr:"2006",bekanntheit:1,bek_text:"Erste Schweizer Wacken-Metal-Battle-Sieger",zeit:"14:45–15:45",buehne:"Headbangers Stage",abschied:false,besonderheit:{icon:"🏆",text:"Expellow gewannen 2025 als erste Schweizer Band überhaupt das internationale Finale des Wacken Metal Battle – gegen mehr als 12.000 teilnehmende Bands weltweit."},hits:["Songs von \"Signals On Swells\" (2024)"],geschichte:"2006 in der Nähe von Zürich gegründet, entwickelte sich Expellow von hardcore-punkigen Anfängen zu modernem Metalcore. 2025 krönte der Sieg beim internationalen Wacken Metal Battle die Bandgeschichte.",tipp:"Die Schweizer Metal-Battle-Sieger 2025 live erleben – verdiente Bühne.",website:null,spotify:"https://open.spotify.com/artist/7n7ZqJDzdKrZul0UjAWUhC"},
+  {name:"5th Avenue",role:"Support",tag:"mittwoch",country:"de",genre:"Classic Rock / Hard Rock",genreCluster:"Rock / Hard Rock",genreBg:"rgba(99,153,34,0.18)",genreColor:"#7bbf30",dotBg:"rgba(99,153,34,0.25)",dotColor:"#7bbf30",herkunft:"Hamburg, Deutschland",gegr:"1989",bekanntheit:2,bek_text:"Wacken-Urgestein seit 1990",zeit:"15:00–16:00",buehne:"Wackinger Stage",abschied:false,besonderheit:{icon:"🏛️",text:"5th Avenue spielten bereits beim allerersten Wacken Open Air 1990 als Headliner vor kaum 800 Besuchern – 2026 kehren die Hamburger Rock-Pioniere zum 35. Jubiläum zurück."},hits:["Do You Want My Love?","Luka","Rough Affair"],geschichte:"1989 in Hamburg gegründet, gehörten 5th Avenue zu den Bands der allerersten Stunde des Wacken Open Air. Nach Plattenvertrag bei Polydor und Pause in den 90ern kehrte die Band 2012 zurück und tourt seither als Hamburger Classic-Rock-Institution.",tipp:"Zurück zu den Wurzeln: eine der Bands, die 1990 das erste Wacken bespielten.",website:"https://5thavenue-hamburg.com",spotify:"https://open.spotify.com/artist/1biWH85uIGqR8Nj7oKU5J9"},
+  {name:"Thundermother",role:"Support",tag:"mittwoch",country:"se",genre:"Hard Rock",genreCluster:"Rock / Hard Rock",genreBg:"rgba(99,153,34,0.18)",genreColor:"#7bbf30",dotBg:"rgba(99,153,34,0.25)",dotColor:"#7bbf30",herkunft:"Växjö, Schweden",gegr:"2009",bekanntheit:4,bek_text:"Schwedische Hard-Rock-Kraftpakete",zeit:"15:15–16:15",buehne:"Louder",abschied:false,besonderheit:{icon:"⚡",text:"Thundermother tourten als Support der Scorpions über drei Monate durch Nordamerika und Europa vor über 600.000 Zuschauern – eines der größten Support-Slots einer reinen Frauenband der letzten Jahre."},hits:["Driving in Style","Loud and Free","Whatever","Free Ourselves"],geschichte:"2009 von Gitarristin Filippa Nässil in Växjö gegründet, überstanden Thundermother mehrere komplette Lineup-Wechsel. Mit Alben wie „Heat Wave” und „Black and Gold” gelangen Top-10-Platzierungen in Deutschland.",tipp:"Reiner, kompromissloser Rock'n'Roll für den Mittwochnachmittag.",website:"https://www.thundermother.com",spotify:"https://open.spotify.com/artist/18jTFcgHRRYHdwdof1MDZw"},
+  {name:"Battlecreek",role:"Support",tag:"mittwoch",country:"de",genre:"Thrash Metal",genreCluster:"Death / Thrash",genreBg:"rgba(180,40,40,0.18)",genreColor:"#cc4040",dotBg:"rgba(180,40,40,0.25)",dotColor:"#cc4040",herkunft:"Schnaitsee/Chiemgau, Deutschland",gegr:"2004",bekanntheit:1,bek_text:"Bayerischer Bay-Area-Thrash",zeit:"15:30–16:15",buehne:"Wasteland Stage",abschied:false,besonderheit:null,hits:["Kill or Be Killed","Songs von \"Hate Injection\" und \"Maze of the Mind\""],geschichte:"2004 im oberbayerischen Chiemgau gegründet, erreichten Battlecreek 2009 das deutsche Finale des Wacken Metal Battle. Der Bandname geht auf ein Cornflakes-Rattenproblem im Proberaum zurück, verweist aber klanglich klar auf klassischen Bay-Area-Thrash à la Exodus und Testament.",tipp:"Alter-Schule-Thrash aus Bayern zum Wednesday-Warm-up.",website:null,spotify:null},
+  {name:"Ricky Warwick",role:"Support",tag:"mittwoch",country:"gb",genre:"Hard Rock",genreCluster:"Rock / Hard Rock",genreBg:"rgba(99,153,34,0.18)",genreColor:"#7bbf30",dotBg:"rgba(99,153,34,0.25)",dotColor:"#7bbf30",herkunft:"Newtownards, Nordirland",gegr:"1988 (Solokarriere)",bekanntheit:4,bek_text:"Frontmann von Thin Lizzy & Black Star Riders",zeit:"16:45–17:45",buehne:"Wackinger Stage",abschied:false,besonderheit:{icon:"🎸",text:"Ricky Warwick ist seit 2011 Sänger der Thin-Lizzy-Nachfolgeband und Mitbegründer von Black Star Riders – als Solokünstler tourte er zudem mit Bob Dylan und Sheryl Crow."},hits:["Songs von The Almighty, Black Star Riders und Solowerken"],geschichte:"Der Nordire begann als Rhythmusgitarrist bei New Model Army, gründete 1988 The Almighty und übernahm 2009 den Gesang bei Thin Lizzy. 2012 gründete er mit Thin-Lizzy-Mitgliedern Black Star Riders für eigenes Songmaterial.",tipp:"Ein echtes Stück Rockgeschichte – die Stimme hinter Thin Lizzys Erbe.",website:"https://www.rickywarwick.com",spotify:null},
+  {name:"Poison the Preacher",role:"Support",tag:"mittwoch",country:"co",genre:"Thrash Metal / Crossover / Hardcore",genreCluster:"Death / Thrash",genreBg:"rgba(180,40,40,0.18)",genreColor:"#cc4040",dotBg:"rgba(180,40,40,0.25)",dotColor:"#cc4040",herkunft:"Bogotá, Kolumbien",gegr:"2021",bekanntheit:2,bek_text:"Kolumbiens erste direkt gebuchte Wacken-Band",zeit:"17:00–17:45",buehne:"Wasteland Stage",abschied:false,besonderheit:{icon:"🇨🇴",text:"Poison the Preacher sind die erste kolumbianische Band, die direkt von Wacken und dem Obscene Extreme Festival gebucht wurde – ohne Umweg über den Metal Battle."},hits:["Sucker Punch","Dying Every Day","One Man Army"],geschichte:"2021 in Bogotá gegründet, verbinden Poison the Preacher 80er-Thrash mit Hardcore Punk und Death-Metal-Elementen. Ihr Debüt „Vs The World” (2025) brachte Gastauftritte von Sanguisugabogg und Dead Heat und internationale Anerkennung.",tipp:"Kolumbianischer Crossover-Thrash mit viel Latin-Attitüde.",website:null,spotify:null},
+  {name:"The Hardkiss",role:"Support",tag:"mittwoch",country:"ua",genre:"Alternative Rock",genreCluster:"Rock / Hard Rock",genreBg:"rgba(99,153,34,0.18)",genreColor:"#7bbf30",dotBg:"rgba(99,153,34,0.25)",dotColor:"#7bbf30",herkunft:"Kiew, Ukraine",gegr:"2011",bekanntheit:2,bek_text:"Ukraines erfolgreichste Rockband",zeit:"17:00–18:00",buehne:"Louder",abschied:false,besonderheit:{icon:"🇺🇦",text:"The Hardkiss sind eine der bekanntesten Rockbands der Ukraine und vertraten das Land 2016 im nationalen Eurovision-Vorentscheid – seit 2022 touren sie auch als musikalische Solidaritätsbotschafter für die Ukraine."},hits:["Zhuravli","Kokhantsi","Antarktida","Stones"],geschichte:"2011 in Kiew von Sängerin Julia Sanina und Gitarrist Valeriy Bebko gegründet, kombinieren The Hardkiss Alternative Rock mit elektronischen Elementen und gewannen mehrfach den ukrainischen YUNA-Musikpreis.",tipp:"Kraftvoller ukrainischer Rock mit emotionaler Tiefe.",website:"https://www.thehardkiss.com/en",spotify:"https://open.spotify.com/artist/4IJcztNtY5L7G3qK4yu1qt"},
+  {name:"The Butcher Sisters",role:"Support",tag:"mittwoch",country:"de",genre:"Metalcore / Rap Metal",genreCluster:"Metalcore",genreBg:"rgba(127,119,221,0.18)",genreColor:"#9990e8",dotBg:"rgba(127,119,221,0.25)",dotColor:"#9990e8",herkunft:"Mannheim, Deutschland",gegr:"2011",bekanntheit:3,bek_text:"Deutschrap trifft Metalcore",zeit:"18:00–19:00",buehne:"Faster",abschied:false,besonderheit:{icon:"🎤",text:"The Butcher Sisters verschmelzen Deutschrap mit Metalcore und Beatdown-Hardcore und featurten bereits Metal-Band Equilibrium sowie Comedian Alligatoah – eine ungewöhnliche Genre-Mischung mit wachsender Fanbase."},hits:["Besser als du","Punkrock Poesie","Sonnenbrille"],geschichte:"2011 in Mannheim gegründet, verbinden The Butcher Sisters (kurz TBS) Deutschrap-Texte mit harten Metalcore-Breakdowns. Mit „Das schwarze Album” (2026) knüpften sie an frühere Chart-Erfolge an.",tipp:"Deftige Mischung aus Rap und Metalcore – nichts für zarte Ohren.",website:null,spotify:"https://open.spotify.com/artist/6j8vGWE3wKAFEn0ngreusM"},
+  {name:"Phantom",role:"Support",tag:"mittwoch",country:"mx",genre:"Speed Metal / Thrash Metal",genreCluster:"Death / Thrash",genreBg:"rgba(180,40,40,0.18)",genreColor:"#cc4040",dotBg:"rgba(180,40,40,0.25)",dotColor:"#cc4040",herkunft:"Guadalajara, Mexiko",gegr:"2021",bekanntheit:1,bek_text:"Mexikanische Speed-Metal-Newcomer",zeit:"18:30–19:15",buehne:"Wasteland Stage",abschied:false,besonderheit:{icon:"🦇",text:"Phantom huldigen mit ihrem Sound bewusst dem Jahr 1985 – ihr zweites Album „Tyrants of Wrath” (2025) erschien beim deutschen Kult-Label High Roller Records und brachte der Band ihre erste Europatournee."},hits:["Thunderbeast","The Tower of Seth","Tyrants of Wrath"],geschichte:"2021 in Guadalajara zunächst als Spaßprojekt gegründet, entwickelten sich Phantom rasch zu einer ernstzunehmenden Speed/Thrash-Band im Stil von Venom und früher Slayer/Metallica. High Roller Records veröffentlichte ihr Album „Tyrants of Wrath” 2025.",tipp:"Altmodischer Speed Metal direkt aus Mexiko – schnell, roh, ehrlich.",website:null,spotify:null},
+  {name:"The Gathering",role:"Support",tag:"mittwoch",country:"nl",genre:"Gothic Metal / Alternative Rock",genreCluster:"Metalcore",genreBg:"rgba(127,119,221,0.18)",genreColor:"#9990e8",dotBg:"rgba(127,119,221,0.25)",dotColor:"#9990e8",herkunft:"Nijmegen, Niederlande",gegr:"1989",bekanntheit:4,bek_text:"Mandylion-Reunion mit Anneke van Giersbergen",zeit:"18:45–20:00",buehne:"Louder",abschied:false,besonderheit:{icon:"🎙️",text:"Zum 30. Jubiläum ihres Meilenstein-Albums „Mandylion” tritt The Gathering 2026 einmalig in Deutschland mit der zurückgekehrten Ex-Sängerin Anneke van Giersbergen auf – nach ihrem Weggang 2007 ihr erstes gemeinsames Konzert seit fast 20 Jahren in diesem Line-up."},hits:["Strange Machines","In Motion #1","Leaves","Marooned"],geschichte:"1989 in Nijmegen gegründet, prägte The Gathering mit „Mandylion” (1995) und Sängerin Anneke van Giersbergen den europäischen Gothic Metal. Nach van Giersbergens Ausstieg 2007 entwickelte sich die Band unter neuen Sängerinnen weiter in Richtung Shoegaze und Post-Rock.",tipp:"Einmaliges Deutschland-Konzert der Mandylion-Originalbesetzung – Gänsehaut-Garantie.",website:null,spotify:null},
+  {name:"Crypt Sermon",role:"Support",tag:"mittwoch",country:"us",genre:"Epic Doom Metal",genreCluster:"Black / Doom",genreBg:"rgba(55,138,221,0.18)",genreColor:"#5090dd",dotBg:"rgba(55,138,221,0.25)",dotColor:"#5090dd",herkunft:"Philadelphia, USA",gegr:"2013",bekanntheit:2,bek_text:"US-Epic-Doom-Elite",zeit:"20:00–20:45",buehne:"Wasteland Stage",abschied:false,besonderheit:{icon:"⚱️",text:"Crypt Sermon gelten als Speerspitze des modernen Epic Doom Metal – ihr Album „The Stygian Rose” (2024) zählte zu den meistgelobten Metal-Alben des Jahres."},hits:["Heavy Is the Crown of Bone","The Ninth Templar","Glimmers in the Underworld"],geschichte:"2013 in Philadelphia gegründet, orientieren sich Crypt Sermon am klassischen Epic Doom von Candlemass und Solitude Aeturnus. Mit „Out of the Garden” (2015), „The Ruins of Fading Light” (2019) und „The Stygian Rose” (2024) gehören sie zu den gefeiertsten Bands des Genres.",tipp:"Monumentaler, düsterer Doom für die Wasteland Stage.",website:"https://www.cryptsermon.com",spotify:"https://open.spotify.com/artist/363ih5wuNGWBFcjeKFG8cc"},
+  {name:"Electric Bassboy",role:"Support",tag:"mittwoch",country:"de",genre:"Hardstyle / Electronic",genreCluster:"Electronic / Pop",genreBg:"rgba(20,160,180,0.18)",genreColor:"#20a0c0",dotBg:"rgba(20,160,180,0.25)",dotColor:"#20a0c0",herkunft:"Castrop-Rauxel, Deutschland",gegr:"2025 (Projekt)",bekanntheit:3,bek_text:"DJ-Projekt von Electric Callboy",zeit:"20:00–21:00",buehne:"Faster",abschied:false,besonderheit:{icon:"🎧",text:"Hinter Electric Bassboy stecken Mitglieder von Electric Callboy, die seit 2025 als Hardstyle-DJ-Set auf Festivals auftreten – eine tanzbare Ergänzung zum eigentlichen Bandprogramm."},hits:["DJ-Sets aus dem Electric-Callboy-Katalog in Hardstyle-Edits"],geschichte:"Electric Callboy, bekannt für die Verschmelzung von Metalcore und EDM, gründeten 2025 unter dem Namen Electric Bassboy ein DJ-Nebenprojekt, das auf Festivals wie Rock am Ring und beim eigenen Escalation Fest für Partystimmung sorgt.",tipp:"Tanzbare Pause vom Gitarrensound – Electric Callboy im DJ-Modus.",website:null,spotify:null},
+  {name:"Velvet Rush",role:"Support",tag:"mittwoch",country:"de",genre:"Hard Rock",genreCluster:"Rock / Hard Rock",genreBg:"rgba(99,153,34,0.18)",genreColor:"#7bbf30",dotBg:"rgba(99,153,34,0.25)",dotColor:"#7bbf30",herkunft:"Hamburg, Deutschland",gegr:"2023",bekanntheit:1,bek_text:"Hamburger 70s-Hard-Rock-Newcomer",zeit:"20:15–21:00",buehne:"W:E:T Stage",abschied:false,besonderheit:{icon:"🎙️",text:"Ihre Debütsingle „Euphonia” wurde vom Classic Rock Magazine UK zum „Best New Rock Song” gekürt – Velvet Rush wurden seither von Frontiers Music unter Vertrag genommen und tourten mit Jerry Cantrell (Alice in Chains)."},hits:["Euphonia","Nature of the Beast","Shake That Thing"],geschichte:"Die Hamburger Band um Sängerin Sandra Lian verbindet 70er-Hardrock mit modernem Groove. Nach der gefeierten EP „Euphonia” erschien 2025 das Debütalbum „Trail of Gold”, aufgenommen in den legendären Chameleon Studios Hamburg.",tipp:"Frischer, bluesiger Hardrock aus Hamburg – eine der Entdeckungen des Jahres.",website:"https://www.velvetrush.com",spotify:"https://open.spotify.com/intl-de/artist/2MorUzc2WoEC4CA8VKjRuK"},
+  {name:"Dirty Shirt",role:"Support",tag:"mittwoch",country:"ro",genre:"Folkcore Metal",genreCluster:"Folk / Celtic",genreBg:"rgba(29,158,117,0.18)",genreColor:"#20b080",dotBg:"rgba(29,158,117,0.25)",dotColor:"#20b080",herkunft:"Seini/Maramureș, Rumänien",gegr:"1995",bekanntheit:2,bek_text:"Rumänischer Folkcore-Exportschlager",zeit:"20:15–21:15",buehne:"Wackinger Stage",abschied:false,besonderheit:{icon:"🎻",text:"Dirty Shirt begannen als Hochzeitsband im postkommunistischen Rumänien und wurden 2014 Zweitplatzierte beim internationalen Wacken Metal Battle – 2026 ist ihr dritter Wacken-Auftritt."},hits:["Dope-A-Min","Geamparalele","Büntető (feat. Besh o droM)"],geschichte:"1995 in der Kleinstadt Seini (Maramureș) als Hochzeitsband gegründet, entwickelten sich Dirty Shirt zu Rumäniens bekanntestem Metal-Export: eine Mischung aus rumänischer Folklore, Nu-Metal, Hardcore und Industrial.",tipp:"Balkan-Folklore trifft Moshpit – garantiert die tanzbarste Band des Tages.",website:null,spotify:null},
+  {name:"The Troops of Doom",role:"Support",tag:"mittwoch",country:"br",genre:"Death/Thrash Metal",genreCluster:"Death / Thrash",genreBg:"rgba(180,40,40,0.18)",genreColor:"#cc4040",dotBg:"rgba(180,40,40,0.25)",dotColor:"#cc4040",herkunft:"Brasilien",gegr:"2020",bekanntheit:2,bek_text:"Ex-Sepultura-Gitarrist auf den Spuren der eigenen Vergangenheit",zeit:"21:30–22:15",buehne:"Wasteland Stage",abschied:false,besonderheit:{icon:"💀",text:"Gegründet von Sepultura-Gründungsmitglied Jairo „Tormentor” Guedz, der die Songs „Bestial Devastation” und „Morbid Visions” mitschrieb – The Troops of Doom knüpfen bewusst an den brasilianischen Death/Thrash der 80er an."},hits:["Chapels of the Unholy","Dawn of Mephisto","Bestial Devastation"],geschichte:"2020 während der Pandemie von Ex-Sepultura-Gitarrist Jairo Guedz gegründet, benannte sich die Band nach einem frühen Sepultura-Song, an dessen Komposition Guedz noch beteiligt war. Alben wie „Antichrist Reborn” (2022) und „A Mass to the Grotesque” (2024) gelten als Zeitmaschine in die goldene Ära des Death Metal.",tipp:"Ursprünglicher Sepultura-Sound direkt von einem, der dabei war.",website:"https://www.thetroopsofdoom.com",spotify:null},
+  {name:"Sacred Steel",role:"Support",tag:"mittwoch",country:"de",genre:"Epic/True Metal",genreCluster:"Power / Viking",genreBg:"rgba(186,117,23,0.18)",genreColor:"#c89030",dotBg:"rgba(186,117,23,0.25)",dotColor:"#c89030",herkunft:"Ludwigsburg, Deutschland",gegr:"1996",bekanntheit:2,bek_text:"Erste deutsche Metal-Blade-Band",zeit:"23:00–00:00",buehne:"Wasteland Stage",abschied:false,besonderheit:{icon:"⚔️",text:"Sacred Steel unterschrieben 1997 als erste deutsche Band überhaupt bei Metal Blade Records – seit ihrem Wacken-Debüt 1998 gehören sie zu den Konstanten der deutschen True-Metal-Szene."},hits:["Songs von \"Reborn in Steel\" und \"Wargods of Metal\""],geschichte:"1996 in Ludwigsburg gegründet, spielen Sacred Steel klassischen amerikanisch geprägten True Metal mit Thrash- und Epic-Einflüssen. 1997 als erste deutsche Band bei Metal Blade Records unter Vertrag, feierten sie 1998 ihr erstes Wacken-Konzert.",tipp:"Traditioneller, ungefilterter Heavy Metal ohne Kompromisse.",website:null,spotify:"https://open.spotify.com/artist/0IZvYyslQEyG9Aa4Sy2orL"},
+  {name:"Mambo Kurt",role:"Support",tag:"mittwoch",country:"de",genre:"Heimorgel-Coverkunst",genreCluster:"Rock / Hard Rock",genreBg:"rgba(99,153,34,0.18)",genreColor:"#7bbf30",dotBg:"rgba(99,153,34,0.25)",dotColor:"#7bbf30",herkunft:"Hagen, Deutschland",gegr:"1998 (als Bühnenprojekt)",bekanntheit:3,bek_text:"Wacken-Kult-Institution an der Heimorgel",zeit:"00:15–01:00",buehne:"Headbangers Stage",abschied:false,besonderheit:{icon:"🎹",text:"Mambo Kurt, bürgerlich Rainer Limpinsel, war 1982 westdeutscher Heimorgel-Meister im Jugendalter – seit 2004 covert er auf seiner 120-kg-Yamaha-Electone Metal-Klassiker in Mambo- und Ska-Rhythmen und ist heute Arzt und Alleinunterhalter in Personalunion."},hits:["Enter Sandman (Walzer-Version)","Metal-Klassiker als Heimorgel-Cover"],geschichte:"Seit 1998 covert Rainer Limpinsel als Mambo Kurt Rock- und Metal-Klassiker auf der Heimorgel – legendär ist seine Walzer-Version von „Enter Sandman”. Seit 2004 fester Bestandteil des Wacken-Programms, feierte er 2024 sein 20-jähriges Wacken-Jubiläum.",tipp:"Der schrägste Programmpunkt des Festivals – Polonaise garantiert.",website:"https://mambokurt.de",spotify:null},
   // ─── SAMSTAG ────────────────────────────────────────────────────────────
   {name:"Arch Enemy",role:"Support",tag:"samstag",country:"se",genre:"Melodic Death Metal",genreCluster:"Melodic Metal",genreBg:"rgba(216,90,48,0.18)",genreColor:"#e87a50",dotBg:"rgba(216,90,48,0.25)",dotColor:"#e87a50",herkunft:"Halmstad, Schweden",gegr:"1995",bekanntheit:4,bek_text:"MDM-Stars, international",zeit:"19:00–20:30",buehne:"Harder",abschied:false,besonderheit:{icon:"🎤",text:"2026 tritt Arch Enemy erstmals mit neuer Sängerin Lauren Hart auf – die Ablösung der legendären Alissa White-Gluz sorgt für Spannung. Ihr 10. Wacken-Auftritt!"},hits:["Will to Power","War Eternal","Nemesis","You Will Know My Name","Blood on Your Hands"],geschichte:"Von Michael Amott (ex-Carcass) 1995 gegründet. Lauren Hart übernimmt 2026 das Mikro nach Alissa White-Gluz.",tipp:"Das neue Kapitel Arch Enemy auf Wacken – wird historisch bewertet werden.",website:"https://www.archenemy.net",spotify:"https://open.spotify.com/artist/0VEB97MTavpNvGFJkV9JqN"},
   {name:"Lamb of God",role:"Support",tag:"samstag",country:"us",genre:"Groove Metal / Metalcore",genreCluster:"Death / Thrash",genreBg:"rgba(180,40,40,0.18)",genreColor:"#cc4040",dotBg:"rgba(180,40,40,0.25)",dotColor:"#cc4040",herkunft:"Richmond, Virginia, USA",gegr:"1994",bekanntheit:4,bek_text:"Groove-Metal-Elite",zeit:"16:15–17:15",buehne:"Harder",abschied:false,besonderheit:{icon:"🔥",text:"Sänger Randy Blythe wurde 2012 in Tschechien wegen fahrlässiger Tötung verhaftet – er wurde freigesprochen und schrieb darüber ein preisgekröntes Buch."},hits:["Laid to Rest","Redneck","Ashes of the Wake","Walk with Me in Hell","As the Palaces Burn"],geschichte:"1994 in Richmond gegründet, definieren Lamb of God modernen Groove Metal. Ashes of the Wake (2004) gilt als eines der wichtigsten Metal-Alben des Jahrzehnts.",tipp:"Samstags neben Powerwolf und Sabaton – Groove-Metal-Druck vom Feinsten.",website:"https://www.lambofgod.com",spotify:"https://open.spotify.com/artist/0LHC5fVSJbBxdSGfAY9z7N"},
@@ -182,6 +376,10 @@ const bands = [
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 let activeTab = "alle";
 let activeGenre = null;
+let activeStage = null;
+let searchQuery = "";
+let sortMode = "bekanntheit";
+const dayDateISO = { mittwoch:"2026-07-29", donnerstag:"2026-07-30", freitag:"2026-07-31", samstag:"2026-08-01" };
 const priorityClusters = ["Melodic Metal","Glam / Hair Metal","Psychedelic / Prog","Rock / Hard Rock"];
 const clusterColors = {
   "Melodic Metal":     {bg:"rgba(216,90,48,0.18)",  color:"#e87a50"},
@@ -225,18 +423,43 @@ function renderFilters(){
     const style=a?`background:${col.color};border-color:${col.color};color:#0d1117`:`background:${col.bg};border-color:${col.color}66;color:${col.color}`;
     return `<div class="pill-genre${a?' active':''}" style="${style}" onclick="setGenre('${c}')">${c}</div>`;
   }).join("");
+  document.getElementById("stageRow").innerHTML=Object.keys(stageInfo).map(s=>{
+    const info=stageInfo[s];
+    const a=activeStage===s;
+    const style=a?`background:${info.color};border-color:${info.color};color:#0d1117`:`background:${info.bg};border-color:${info.color}66;color:${info.color}`;
+    return `<div class="pill-genre${a?' active':''}" style="${style}" onclick="setStage('${s}')">${info.icon} ${s}</div>`;
+  }).join("");
+  const sortOpts=[{v:"bekanntheit",l:"Bekanntheit"},{v:"zeit",l:"⏱ Spielzeit"}];
+  document.getElementById("sortRow").innerHTML=sortOpts.map(o=>{
+    const a=sortMode===o.v;
+    return `<div class="pill${a?' active':''}" onclick="setSortMode('${o.v}')">${o.l}</div>`;
+  }).join("");
 }
 function setTab(t){activeTab=t;render();}
 function setGenre(g){activeGenre=(activeGenre===g?null:g);render();}
+function setStage(s){activeStage=(activeStage===s?null:s);render();}
+function setSearch(v){searchQuery=v.trim().toLowerCase();render();}
+function setSortMode(m){sortMode=m;render();}
 function filterBands(){
   return bands.filter(b=>{
     const tabOk=activeTab==="alle"||(activeTab==="Headliner"&&b.role==="Headliner")||
                 (["mittwoch","donnerstag","freitag","samstag"].includes(activeTab)&&b.tag===activeTab);
     const genreOk=!activeGenre||b.genreCluster===activeGenre;
-    return tabOk&&genreOk;
+    const stageOk=!activeStage||b.buehne===activeStage;
+    const searchOk=!searchQuery||b.name.toLowerCase().includes(searchQuery)||b.genre.toLowerCase().includes(searchQuery)||b.herkunft.toLowerCase().includes(searchQuery);
+    return tabOk&&genreOk&&stageOk&&searchOk;
   });
 }
 function sortBands(arr){
+  if(sortMode==='zeit'){
+    return arr.slice().sort((a,b)=>{
+      const ta=parseBandTimes(a),tb=parseBandTimes(b);
+      if(!ta&&!tb)return 0;
+      if(!ta)return 1;
+      if(!tb)return -1;
+      return ta.start-tb.start;
+    });
+  }
   return arr.slice().sort((a,b)=>{
     if(a.role!==b.role)return a.role==="Headliner"?-1:1;
     return b.bekanntheit-a.bekanntheit;
@@ -294,7 +517,56 @@ function render(){
   document.getElementById('bandCount').textContent=`${sorted.length} Band${sorted.length!==1?'s':''} angezeigt`;
   document.getElementById('filterWrap').style.top=document.querySelector('.header').offsetHeight+'px';
 }
+function parseBandTimes(entry){
+  if(entry.zeit==='Abgesagt')return null;
+  const [startStr,endStr]=entry.zeit.split('–');
+  const [sh,sm]=startStr.split(':').map(Number);
+  const [eh,em]=endStr.split(':').map(Number);
+  const start=new Date(dayDateISO[entry.tag]+"T00:00:00");
+  start.setHours(sh,sm,0,0);
+  if(sh<6)start.setDate(start.getDate()+1);
+  const end=new Date(dayDateISO[entry.tag]+"T00:00:00");
+  end.setHours(eh,em,0,0);
+  if(eh<6)end.setDate(end.getDate()+1);
+  if(end<=start)end.setDate(end.getDate()+1);
+  return{start,end};
+}
+function updateLiveBar(){
+  const bar=document.getElementById('liveBar');
+  if(!bar)return;
+  const now=new Date();
+  const stageOrder=Object.keys(stageInfo);
+  const parsed=fullSchedule.map(e=>({e,t:parseBandTimes(e)})).filter(x=>x.t);
+  const byStageIdx=x=>{const i=stageOrder.indexOf(x.e.buehne);return i===-1?99:i;};
+  const live=parsed.filter(x=>now>=x.t.start&&now<x.t.end).sort((a,b)=>byStageIdx(a)-byStageIdx(b));
+  // pro Bühne den jeweils naechsten Act finden (unabhaengig davon ob andere Buehnen frueher/spaeter dran sind)
+  const nextPerStage=[];
+  stageOrder.forEach(stage=>{
+    const upcomingOnStage=parsed.filter(x=>x.e.buehne===stage&&x.t.start>now).sort((a,b)=>a.t.start-b.t.start);
+    if(upcomingOnStage.length>0)nextPerStage.push(upcomingOnStage[0]);
+  });
+  nextPerStage.sort((a,b)=>byStageIdx(a)-byStageIdx(b));
+  if(live.length===0&&nextPerStage.length===0){bar.style.display='none';return;}
+  bar.style.display='block';
+  const weekdayShort=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const chip=(x,showTime)=>{
+    const info=stageInfo[x.e.buehne]||{icon:'',bg:'rgba(150,150,150,0.15)',color:'#999'};
+    const timeStr=showTime?` <span class="live-chip-time">${weekdayShort[x.t.start.getDay()]} ${x.t.start.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</span>`:'';
+    return `<div class="live-chip" style="background:${info.bg};border-color:${info.color}66;color:${info.color}"><span class="live-chip-stage">${info.icon} ${x.e.buehne}</span> ${x.e.name}${timeStr}</div>`;
+  };
+  let html='';
+  if(live.length>0){
+    html+=`<div class="live-bar-section"><div class="live-bar-heading"><div class="live-dot"></div>Live jetzt · ${live.length} Bühne${live.length!==1?'n':''} aktiv</div><div class="live-chip-row">${live.map(x=>chip(x,false)).join('')}</div></div>`;
+  }
+  if(nextPerStage.length>0){
+    const label=live.length>0?'Als Nächstes je Bühne':'Nächste Acts je Bühne';
+    html+=`<div class="live-bar-section"><div class="live-bar-heading"><div class="next-dot"></div>${label}</div><div class="live-chip-row">${nextPerStage.map(x=>chip(x,true)).join('')}</div></div>`;
+  }
+  bar.innerHTML=html;
+}
 render();
+updateLiveBar();
+setInterval(updateLiveBar,60000);
 
 </script>
 </body>
