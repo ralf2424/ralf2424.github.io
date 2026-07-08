@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doku // Ralf's Festival Planer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #0d1117;
+    --bg-card:     #161b27;
+    --bg-card2:    #1c2333;
+    --bg-input:    #0a0e17;
+    --border:      #2d333b;
+    --border-dim:  #21262d;
+    --text:        #e6edf3;
+    --text-muted:  #8b949e;
+    --text-dim:    #484f58;
+    --green:       #34d399;
+    --green-glow:  rgba(52,211,153,0.12);
+    --blue:        #60a5fa;
+    --blue-glow:   rgba(96,165,250,0.12);
+    --red:         #f87171;
+    --amber:       #fbbf24;
+    --radius:      8px;
+    --shadow:      0 1px 8px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0a0e17 0%, #111827 60%, #0f1e33 100%);
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--border-dim);
+    position: relative; overflow: hidden; text-align: center;
+  }
+  .header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(52,211,153,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 50%, rgba(96,165,250,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .back-btn {
+    position: relative; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 12px 5px 10px;
+    text-decoration: none; margin-bottom: 10px; transition: all .15s;
+  }
+  .back-btn:hover { border-color: var(--green); color: var(--green); }
+  .header-logo    { font-size: 11px; font-weight: 700; color: var(--green);
+                     letter-spacing: 2px; text-transform: uppercase; position: relative; }
+  .header-title   { font-size: 22px; font-weight: 700; color: var(--green);
+                     margin: 4px 0 3px; letter-spacing: -0.3px; position: relative; }
+  .header-planer  { font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px;
+                     text-transform: uppercase; margin-bottom: 6px; position: relative; }
+  .header-sub     { font-size: 11px; color: var(--text-muted); line-height: 1.5; position: relative; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 720px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  .section-header {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0 14px;
+    margin-top: 8px;
+  }
+  .section-header::after { content: ''; flex: 1; height: 1px; background: var(--border-dim); }
+
+  /* ── PROSE CARD ── */
+  .prose-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    border: 1px solid var(--border-dim);
+    box-shadow: var(--shadow);
+    margin-bottom: 22px;
+  }
+  .prose-card h2 {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    margin-bottom: 10px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .prose-card p {
+    font-size: 13px; color: var(--text-muted);
+    line-height: 1.7; margin-bottom: 10px;
+  }
+  .prose-card p:last-child { margin-bottom: 0; }
+  .prose-card strong { color: var(--text); font-weight: 600; }
+  .prose-card .highlight { color: var(--blue); font-weight: 500; }
+  .prose-card ul { list-style: none; margin: 6px 0 10px 0; }
+  .prose-card li {
+    font-size: 13px; color: var(--text-muted); line-height: 1.7;
+    padding-left: 16px; position: relative;
+  }
+  .prose-card li::before {
+    content: '→'; position: absolute; left: 0; color: var(--green);
+  }
+
+  /* Demo-Label über einem Live-Beispiel */
+  .demo-label {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-dim);
+    margin: 14px 0 8px;
+  }
+  .demo-box {
+    background: var(--bg-input);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 4px;
+  }
+
+  /* ── Filter-Pills Demo ── */
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filter-pill {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--bg-input); color: var(--text-muted);
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .filter-pill.active {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 0 12px rgba(96,165,250,0.25);
+  }
+  .genre-pill {
+    border-radius: 20px; padding: 4px 11px; font-size: 11px; font-weight: 600;
+    border: 1px solid;
+  }
+
+  /* ── Live-Anzeige Demo ── */
+  .event-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border-dim);
+  }
+  .event-item:last-child { border-bottom: none; }
+  .event-time { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-dim); min-width: 40px; }
+  .event-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .event-dot.green { background: var(--green); box-shadow: 0 0 5px rgba(52,211,153,0.4); }
+  .event-dot.amber { background: var(--amber); box-shadow: 0 0 5px rgba(251,191,36,0.3); }
+  .event-dot.muted { background: var(--text-dim); }
+  .event-text { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .event-text strong { color: var(--text); font-weight: 500; }
+
+  /* ── Bandkarte Demo ── */
+  .demo-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-dim);
+    border-left: 3px solid var(--green);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .demo-card-header { display: flex; align-items: center; gap: 12px; padding: 14px; }
+  .dot {
+    width: 46px; height: 46px; border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; letter-spacing: -0.3px;
+    flex-shrink: 0; background: var(--green); color: #0d1117;
+  }
+  .demo-card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .demo-card-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .badge {
+    font-size: 9.5px; font-weight: 700; padding: 1px 7px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    background: rgba(52,211,153,0.12); color: var(--green);
+    border: 1px solid rgba(52,211,153,0.3);
+    margin-left: 6px;
+  }
+  .stars { color: var(--amber); letter-spacing: 1px; font-size: 12px; }
+  .demo-card-body { padding: 0 14px 14px; }
+  .demo-card-body p { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+  .infobox {
+    border-radius: var(--radius); padding: 10px 12px;
+    font-size: 12.5px; line-height: 1.55;
+    border-left: 3px solid var(--amber);
+    background: rgba(251,191,36,0.06); color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .infobox strong { font-weight: 700; display: block; margin-bottom: 2px; color: var(--amber); }
+  .link-row { display: flex; gap: 8px; }
+  .link-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 13px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 600;
+    text-decoration: none; border: 1px solid;
+  }
+  .link-spotify { background: rgba(29,185,84,0.08); border-color: rgba(29,185,84,0.35); color: #1DB954; }
+  .link-web { background: var(--bg-input); border-color: var(--border); color: var(--text-muted); }
+
+  footer {
+    text-align: center; padding: 24px; color: var(--text-dim); font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="index.html" class="back-btn">← Übersicht</a>
+    <div class="header-logo">Doku</div>
+    <div class="header-title">Ralf's Festival Planer</div>
+    <div class="header-planer">Benutzerhandbuch</div>
+    <div class="header-sub">Kurz erklärt: was diese Seiten können und wie du sie nutzt</div>
+  </div>
+
+  <div class="container">
+
+    <div class="prose-card">
+      <h2>Was ist das hier?</h2>
+      <p>Diese Website ist eine Sammlung von <strong>interaktiven Festival-Planern</strong> —
+      jede Unterseite ist ein eigenständiges Briefing-Dokument für ein Festival, mit Lineup,
+      Spielzeiten, Bandinfos und Spotify-Links. Alles läuft als einzelne HTML-Datei,
+      funktioniert offline und ist mobil optimiert.</p>
+    </div>
+
+    <div class="section-header">Übersichtsseite</div>
+    <div class="prose-card">
+      <p>Die <strong>Startseite</strong> (<span class="highlight">index.html</span>) ist der
+      zentrale Einstiegspunkt. Sie zeigt eine Kachel pro Festival — ein Klick führt direkt
+      zum jeweiligen Planer. Neue Festivals werden hier als weitere Kachel ergänzt.</p>
+    </div>
+
+    <div class="section-header">Filterleiste</div>
+    <div class="prose-card">
+      <p>Jeder Festival-Planer hat oben eine Filterleiste, mit der sich das Lineup eingrenzen
+      lässt — nach <strong>Tag</strong>, <strong>Genre</strong>, <strong>Bühne</strong> oder per
+      freier <strong>Suche</strong>. Der aktive Filter ist immer blau hervorgehoben.</p>
+      <div class="demo-label">Beispiel: Tag-Filter</div>
+      <div class="demo-box">
+        <div class="filter-row">
+          <span class="filter-pill active">Alle</span>
+          <span class="filter-pill">Do 30.07.</span>
+          <span class="filter-pill">Fr 31.07.</span>
+          <span class="filter-pill">Sa 01.08.</span>
+        </div>
+      </div>
+      <div class="demo-label">Beispiel: Genre-Chips</div>
+      <div class="demo-box">
+        <div class="filter-row">
+          <span class="genre-pill" style="background:#34d39926; border-color:#34d39966; color:#34d399;">Death Metal</span>
+          <span class="genre-pill" style="background:#60a5fa26; border-color:#60a5fa66; color:#60a5fa;">Thrash</span>
+          <span class="genre-pill" style="background:#fbbf2426; border-color:#fbbf2466; color:#fbbf24;">Folk Metal</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">Live-Anzeige</div>
+    <div class="prose-card">
+      <p>Während des Festivals zeigt die Seite automatisch an, was <strong>gerade läuft</strong>
+      und was als Nächstes je Bühne kommt — basierend auf der echten Uhrzeit deines Geräts.
+      Kein manuelles Nachschlagen nötig.</p>
+      <div class="demo-label">Beispiel: Jetzt läuft / Als Nächstes</div>
+      <div class="demo-box">
+        <div class="event-item">
+          <span class="event-time">21:40</span>
+          <span class="event-dot green"></span>
+          <span class="event-text"><strong>Wacken Main Stage:</strong> Amon Amarth läuft gerade</span>
+        </div>
+        <div class="event-item">
+          <span class="event-time">23:00</span>
+          <span class="event-dot amber"></span>
+          <span class="event-text"><strong>Party Stage:</strong> als Nächstes — Feuerschwanz</span>
+        </div>
+        <div class="event-item">
+          <span class="event-time">—</span>
+          <span class="event-dot muted"></span>
+          <span class="event-text">Black Stage: Programm für heute beendet</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">Bandkarten</div>
+    <div class="prose-card">
+      <p>Jede Band hat eine eigene, aufklappbare Karte mit Kürzel-Avatar, Genre, Bewertung
+      (falls bekannt), einer kurzen Besonderheit und direkten Links zu Spotify und Website.
+      Ein Tap auf den Kartenkopf klappt die Details auf.</p>
+      <div class="demo-label">Beispiel: Bandkarte (aufgeklappt)</div>
+      <div class="demo-box" style="background:transparent; border:none; padding:0;">
+        <div class="demo-card">
+          <div class="demo-card-header">
+            <div class="dot">AA</div>
+            <div>
+              <div class="demo-card-title">Amon Amarth <span class="badge">Headliner</span></div>
+              <div class="demo-card-meta">Melodic Death Metal · <span class="stars">★★★★★</span></div>
+            </div>
+          </div>
+          <div class="demo-card-body">
+            <p>Schwedische Wikinger-Metaller, bekannt für epische Live-Shows mit Bühnenbild
+            im Nordmann-Stil und Hits wie „Guardians of Asgaard".</p>
+            <div class="infobox">
+              <strong>Besonderheit</strong>
+              Traditionell einer der Höhepunkte des Festivals — früh anwesend sein lohnt sich.
+            </div>
+            <div class="link-row">
+              <a class="link-btn link-spotify" href="#">♫ Spotify</a>
+              <a class="link-btn link-web" href="#">🌐 Website</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:14px;">Badges wie <span class="badge" style="margin-left:0;">Headliner</span>
+      kennzeichnen besondere Slots, z. B. auch <strong>TBA</strong> für noch nicht bestätigte
+      Zeiten. Die ★-Bewertung ist Ralfs persönliche Einschätzung, keine offizielle Wertung.</p>
+    </div>
+
+    <div class="section-header">Navigation</div>
+    <div class="prose-card">
+      <p>Von jeder Festival-Seite führt oben links ein <strong>„← Übersicht"</strong>-Button
+      zurück zur Startseite:</p>
+      <div class="demo-box" style="display:inline-block;">
+        <span class="back-btn" style="position:static; background:var(--bg-card2);">← Übersicht</span>
+      </div>
+    </div>
+
+    <div class="section-header">Tipps zur Nutzung</div>
+    <div class="prose-card">
+      <ul>
+        <li>Die Seiten funktionieren <strong>offline</strong> — einmal geladen, auch ohne
+        Empfang am Festivalgelände nutzbar.</li>
+        <li>Für Freunde: Am besten den <strong>Link</strong> teilen, nicht die HTML-Datei
+        direkt — z. B. via WhatsApp funktioniert das zuverlässiger.</li>
+        <li>Timetable und Bandinfos werden vor jeder Saison aktualisiert, sobald offizielle
+        Zeiten feststehen. Bis dahin gilt: Zeiten mit <strong>TBA</strong>-Kennzeichnung sind
+        Platzhalter.</li>
+      </ul>
+    </div>
+
+    <div class="section-header">Haftungsausschluss</div>
+    <div class="prose-card">
+      <div class="infobox" style="margin-bottom:14px;">
+        <strong>Keine Gewähr</strong>
+        Alle Angaben zu Zeiten, Bühnen und Lineups ohne Gewähr. Änderungen durch die
+        Veranstalter sind jederzeit möglich — maßgeblich sind immer die offiziellen
+        Timetables vor Ort.
+      </div>
+      <p>Diese Seite ist ein <strong>privates, nicht-kommerzielles Projekt</strong> zur
+      eigenen Festivalplanung. Inhalte wie Spielzeiten, Bandinfos und Bewertungen basieren
+      auf öffentlich zugänglichen Quellen und persönlicher Einschätzung — für Richtigkeit,
+      Vollständigkeit und Aktualität wird keine Haftung übernommen. Mit
+      <strong>TBA</strong> gekennzeichnete Zeiten sind Platzhalter, keine bestätigten Angaben.</p>
+    </div>
+
+  </div>
+
+  <footer>ralf2424.github.io</footer>
+
+</body>
+</html>
